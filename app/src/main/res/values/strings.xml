@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Black Swan Data Sender</string>
+    <string name="btn_start">Start sending</string>
+    <string name="btn_stop">Stop sending</string>
+</resources>
