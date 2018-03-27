@@ -11,8 +11,7 @@ import java.util.List;
  * Listens to a phone state changes and notify the callback.
  * @author Stepan Hruska, Premysl Cerny
  */
-public class PhoneListener extends PhoneStateListener
-{
+public class PhoneListener extends PhoneStateListener {
 	private PhoneListenerCallback m_phoneListenerCallback;
 	private TelephonyManager m_telephonyManager;
 	private PhoneResponse m_phoneResponse;
@@ -40,8 +39,8 @@ public class PhoneListener extends PhoneStateListener
 		long txBytes = TrafficStats.getMobileTxBytes();
 		long rxBytes = TrafficStats.getMobileRxBytes();
 
-		if (txBytes > 0) m_phoneResponse.setmTX(txBytes);
-		if (rxBytes > 0) m_phoneResponse.setmRX(rxBytes);
+		if (txBytes > 0) m_phoneResponse.setTX(txBytes);
+		if (rxBytes > 0) m_phoneResponse.setRX(rxBytes);
 
 		m_phoneListenerCallback.onPhoneResponseChange(m_phoneResponse);
 		m_phoneResponse.setmFirstDataState(false);
@@ -69,8 +68,8 @@ public class PhoneListener extends PhoneStateListener
 	public void onSignalStrengthsChanged(android.telephony.SignalStrength signalStrength) {
 		// get the signal strength (a value between 0 and 31)
 		int nType = m_telephonyManager.getNetworkType();
-		String ssignal = signalStrength.toString();
 
+		String ssignal = signalStrength.toString();
 		String[] parts = ssignal.split(" ");
 		if (nType == TelephonyManager.NETWORK_TYPE_LTE){
 			m_phoneResponse.setSig_ASU(Integer.parseInt(parts[9]));
@@ -118,7 +117,7 @@ public class PhoneListener extends PhoneStateListener
 
 		m_phoneResponse.setCallState(state);
 		if (!incomingNumber.equals("")){
-			m_phoneResponse.setInNum(incomingNumber);
+			m_phoneResponse.setClg(incomingNumber);
 		}
 
 		m_phoneListenerCallback.onPhoneResponseChange(m_phoneResponse);

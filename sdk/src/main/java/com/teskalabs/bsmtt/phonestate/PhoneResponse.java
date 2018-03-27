@@ -17,9 +17,9 @@ public class PhoneResponse implements Cloneable {
 	private int callState;
 	private boolean mFirstDataState;
 	private boolean mFirstCallState;
-	private long mRX;
-	private long mTX;
-	private String inNum;
+	private long RX;
+	private long TX;
+	private String Clg;
 
 	// just for checking
 	private android.telephony.CellLocation cellLocation;
@@ -47,9 +47,9 @@ public class PhoneResponse implements Cloneable {
 		callState = Integer.MIN_VALUE;
 		mFirstCallState = true;
 		mFirstDataState = true;
-		mRX = Long.MIN_VALUE;
-		mTX = Long.MIN_VALUE;
-		inNum = "";
+		RX = Long.MIN_VALUE;
+		TX = Long.MIN_VALUE;
+		Clg = "";
 	}
 
 	public int getData_state() {
@@ -66,38 +66,6 @@ public class PhoneResponse implements Cloneable {
 
 	public void setData_networkType(int data_networkType) {
 		this.data_networkType = data_networkType;
-	}
-
-	public boolean ismFirstDataState() {
-		return mFirstDataState;
-	}
-
-	public void setmFirstDataState(boolean mFirstDataState) {
-		this.mFirstDataState = mFirstDataState;
-	}
-
-	public boolean ismFirstCallState() {
-		return mFirstCallState;
-	}
-
-	public void setmFirstCallState(boolean mFirstCallState) {
-		this.mFirstCallState = mFirstCallState;
-	}
-
-	public long getmRX() {
-		return mRX;
-	}
-
-	public void setmRX(long mRX) {
-		this.mRX = mRX;
-	}
-
-	public long getmTX() {
-		return mTX;
-	}
-
-	public void setmTX(long mTX) {
-		this.mTX = mTX;
 	}
 
 	public int getSig_ASU() {
@@ -132,12 +100,44 @@ public class PhoneResponse implements Cloneable {
 		this.callState = callState;
 	}
 
-	public String getInNum() {
-		return inNum;
+	public boolean ismFirstDataState() {
+		return mFirstDataState;
 	}
 
-	public void setInNum(String inNum) {
-		this.inNum = inNum;
+	public void setmFirstDataState(boolean mFirstDataState) {
+		this.mFirstDataState = mFirstDataState;
+	}
+
+	public boolean ismFirstCallState() {
+		return mFirstCallState;
+	}
+
+	public void setmFirstCallState(boolean mFirstCallState) {
+		this.mFirstCallState = mFirstCallState;
+	}
+
+	public long getRX() {
+		return RX;
+	}
+
+	public void setRX(long RX) {
+		this.RX = RX;
+	}
+
+	public long getTX() {
+		return TX;
+	}
+
+	public void setTX(long TX) {
+		this.TX = TX;
+	}
+
+	public String getClg() {
+		return Clg;
+	}
+
+	public void setClg(String clg) {
+		Clg = clg;
 	}
 
 	public CellLocation getCellLocation() {

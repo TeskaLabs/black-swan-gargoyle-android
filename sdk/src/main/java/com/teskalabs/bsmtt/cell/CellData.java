@@ -5,9 +5,9 @@ package com.teskalabs.bsmtt.cell;
  * @author Premysl Cerny
  */
 public class CellData implements Cloneable {
-	private int CID;
-	private int LAC;
-	private int PSC;
+	private int cid;
+	private int lac;
+	private int psc;
 	private int BSID;
 	private int BSILat;
 	private int BSILon;
@@ -17,9 +17,9 @@ public class CellData implements Cloneable {
 	private int pci;
 	private int ci;
 	private int ASU;
-	private int Dbm;
-	private int RNC;
-	private int eNodeB;
+	private int dbm;
+	private int rnc;
+	private int enb;
 	private int TimAdv;
 
 	/**
@@ -36,9 +36,9 @@ public class CellData implements Cloneable {
 	 * Initial data.
 	 */
 	public CellData() {
-		CID = Integer.MIN_VALUE;
-		LAC = Integer.MIN_VALUE;
-		PSC = Integer.MIN_VALUE;
+		cid = Integer.MIN_VALUE;
+		lac = Integer.MIN_VALUE;
+		psc = Integer.MIN_VALUE;
 		BSID = Integer.MIN_VALUE;
 		BSILat = Integer.MIN_VALUE;
 		BSILon = Integer.MIN_VALUE;
@@ -48,34 +48,34 @@ public class CellData implements Cloneable {
 		pci = Integer.MIN_VALUE;
 		ci = Integer.MIN_VALUE;
 		ASU = Integer.MIN_VALUE;
-		Dbm = Integer.MIN_VALUE;
-		RNC = Integer.MIN_VALUE;
-		eNodeB = Integer.MIN_VALUE;
+		dbm = Integer.MIN_VALUE;
+		rnc = Integer.MIN_VALUE;
+		enb = Integer.MIN_VALUE;
 		TimAdv = Integer.MIN_VALUE;
 	}
 
-	public int getCID() {
-		return CID;
+	public int getCid() {
+		return cid;
 	}
 
-	public void setCID(int CID) {
-		this.CID = CID;
+	public void setCid(int cid) {
+		this.cid = cid;
 	}
 
-	public int getLAC() {
-		return LAC;
+	public int getLac() {
+		return lac;
 	}
 
-	public void setLAC(int LAC) {
-		this.LAC = LAC;
+	public void setLac(int lac) {
+		this.lac = lac;
 	}
 
-	public int getPSC() {
-		return PSC;
+	public int getPsc() {
+		return psc;
 	}
 
-	public void setPSC(int PSC) {
-		this.PSC = PSC;
+	public void setPsc(int psc) {
+		this.psc = psc;
 	}
 
 	public int getBSID() {
@@ -151,27 +151,27 @@ public class CellData implements Cloneable {
 	}
 
 	public int getDbm() {
-		return Dbm;
+		return dbm;
 	}
 
 	public void setDbm(int dbm) {
-		Dbm = dbm;
+		this.dbm = dbm;
 	}
 
-	public int getRNC() {
-		return RNC;
+	public int getRnc() {
+		return rnc;
 	}
 
-	public void setRNC(int RNC) {
-		this.RNC = RNC;
+	public void setRnc(int rnc) {
+		this.rnc = rnc;
 	}
 
-	public int geteNodeB() {
-		return eNodeB;
+	public int getEnb() {
+		return enb;
 	}
 
-	public void seteNodeB(int eNodeB) {
-		this.eNodeB = eNodeB;
+	public void setEnb(int enb) {
+		this.enb = enb;
 	}
 
 	public int getTimAdv() {

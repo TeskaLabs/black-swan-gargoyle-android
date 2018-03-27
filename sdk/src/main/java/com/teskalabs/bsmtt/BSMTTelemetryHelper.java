@@ -251,9 +251,9 @@ public class BSMTTelemetryHelper {
 			CellLocation location = telephonyManager.getCellLocation();
 			if (type.equalsIgnoreCase("GSM")) {
 				GsmCellLocation GSMLocation = (GsmCellLocation)location;
-				currentData.setCID(GSMLocation.getCid());
-				currentData.setLAC(GSMLocation.getLac());
-				currentData.setPSC(GSMLocation.getPsc());
+				currentData.setCid(GSMLocation.getCid());
+				currentData.setLac(GSMLocation.getLac());
+				currentData.setPsc(GSMLocation.getPsc());
 			} else if (type.equalsIgnoreCase("CDMA")) {
 				CdmaCellLocation CDMALocation = (CdmaCellLocation)location;
 				currentData.setBSID(CDMALocation.getBaseStationId());
@@ -286,7 +286,7 @@ public class BSMTTelemetryHelper {
 					// cell
 					currentData.setTac(cid.getTac());
 					currentData.setPci(cid.getPci());
-					currentData.seteNodeB(BSMTTelemetryHelper.getLteENodeB(cid.getCi()));
+					currentData.setEnb(BSMTTelemetryHelper.getLteENodeB(cid.getCi()));
 					currentData.setCi(getLteCid(cid.getCi()));
 					// signal
 					currentData.setASU(cs.getAsuLevel());
@@ -296,8 +296,8 @@ public class BSMTTelemetryHelper {
 					CellIdentityGsm cid = ((CellInfoGsm) ci).getCellIdentity();
 					CellSignalStrengthGsm cs = ((CellInfoGsm) ci).getCellSignalStrength();
 					// cell
-					currentData.setLAC(cid.getLac());
-					currentData.setCID(cid.getCid());
+					currentData.setLac(cid.getLac());
+					currentData.setCid(cid.getCid());
 					// signal
 					currentData.setASU(cs.getAsuLevel());
 					currentData.setDbm(cs.getDbm());
@@ -315,10 +315,10 @@ public class BSMTTelemetryHelper {
 					CellIdentityWcdma cid = ((CellInfoWcdma) ci).getCellIdentity();
 					CellSignalStrengthWcdma cs = ((CellInfoWcdma) ci).getCellSignalStrength();
 					// cell
-					currentData.setLAC(cid.getLac());
-					currentData.setRNC(BSMTTelemetryHelper.getRNCid(cid.getCid()));
-					currentData.setCID(BSMTTelemetryHelper.getUMTScid(cid.getCid()));
-					currentData.setPSC(cid.getPsc());
+					currentData.setLac(cid.getLac());
+					currentData.setRnc(BSMTTelemetryHelper.getRNCid(cid.getCid()));
+					currentData.setCid(BSMTTelemetryHelper.getUMTScid(cid.getCid()));
+					currentData.setPsc(cid.getPsc());
 					// signal
 					currentData.setASU(cs.getAsuLevel());
 					currentData.setDbm(cs.getDbm());

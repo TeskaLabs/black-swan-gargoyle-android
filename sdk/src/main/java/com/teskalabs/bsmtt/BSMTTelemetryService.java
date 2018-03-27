@@ -39,7 +39,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	// Basic (dimensions)
 	private String mVendorModel;
 	private String PhoneTypeStr;
-	private String NetOp;
+	private String MCC_MNC;
 	private String net_name;
 	private String IMSI;
 	private String IMEI;
@@ -49,9 +49,9 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	private Location mLocation;
 	// Advanced
 	private boolean haveMobileConnection;
-	private String dconn;
-	private String dataNetStr;
-	private String mRoaming; // added by Premysl
+	private int dconn;
+	// private int dataNetStr;
+	private int mRoaming; // added by Premysl
 	// Information related to the cell
 	private CellData m_cellData; // added by Premysl
 	// Information related to the phone response
@@ -163,15 +163,15 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		if (m_phoneResponse == null ||
 				m_phoneResponse.getCellInfo() != phoneResponse.getCellInfo() ||
 				m_phoneResponse.getCellLocation() != phoneResponse.getCellLocation() ||
-				!m_phoneResponse.getInNum().equals(phoneResponse.getInNum()) ||
+				!m_phoneResponse.getClg().equals(phoneResponse.getClg()) ||
 				m_phoneResponse.getSig_dbm() != phoneResponse.getSig_dbm() ||
 				m_phoneResponse.getSig_ASU() != phoneResponse.getSig_ASU() ||
 				m_phoneResponse.getCallState() != phoneResponse.getCallState() ||
 				m_phoneResponse.getData_networkType() != phoneResponse.getData_networkType() ||
 				m_phoneResponse.getData_state() != phoneResponse.getData_state() ||
 				m_phoneResponse.getDataActivity_dir() != phoneResponse.getDataActivity_dir() ||
-				m_phoneResponse.getmRX() != phoneResponse.getmRX() ||
-				m_phoneResponse.getmTX() != phoneResponse.getmTX()) {
+				m_phoneResponse.getRX() != phoneResponse.getRX() ||
+				m_phoneResponse.getTX() != phoneResponse.getTX()) {
 			// Saving the new response
 			try {
 				m_phoneResponse = phoneResponse.clone();
@@ -195,7 +195,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	private void initialize() {
 		// Initializing necessary variables
-		dataNetStr = "";
+		// dataNetStr = "";
 		m_cellData = new CellData();
 		// Getting the objects where we are getting the information from
 		TMgr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
@@ -257,12 +257,12 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	private void refreshAdvancedPhoneInformation() {
 		// Roaming
-		mRoaming = "Home network";
+		mRoaming = 0;
 		if (TMgr.isNetworkRoaming()) {
-			mRoaming = "Roaming";
+			mRoaming = 1;
 		}
 		if (TMgr.getNetworkType() == TelephonyManager.NETWORK_TYPE_UNKNOWN){
-			mRoaming = "";
+			mRoaming = -1;
 		}
 
 		// Cell info
@@ -271,19 +271,20 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 
 		// Connection
 		haveMobileConnection = BSMTTelemetryHelper.haveMobileConnection(this);
-		dconn = BSMTTelemetryHelper.getDataState(TMgr);
-		NetOp = TMgr.getNetworkOperator();
+		// dconn = BSMTTelemetryHelper.getDataState(TMgr);
+		dconn = TMgr.getDataState();
+		MCC_MNC = TMgr.getNetworkOperator();
 		net_name = TMgr.getNetworkOperatorName();
-		if (m_phoneResponse != null) {
-			dataNetStr = BSMTTelemetryHelper.getNetworkType(m_phoneResponse.getData_networkType());
-		}
+		// if (m_phoneResponse != null) {
+			// dataNetStr = BSMTTelemetryHelper.getNetworkType(m_phoneResponse.getData_networkType());
+		// }
 
 		// Related to the phone response
 		if (m_phoneResponse != null) {
 			long txBytes = TrafficStats.getMobileTxBytes();
 			long rxBytes = TrafficStats.getMobileRxBytes();
-			if (txBytes > 0) m_phoneResponse.setmTX(txBytes);
-			if (rxBytes > 0) m_phoneResponse.setmRX(rxBytes);
+			if (txBytes > 0) m_phoneResponse.setTX(txBytes);
+			if (rxBytes > 0) m_phoneResponse.setRX(rxBytes);
 		}
 	}
 
@@ -383,7 +384,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 			// Phone information
 			JSON.put("vendor_model", mVendorModel);
 			JSON.put("phone_type", PhoneTypeStr);
-			JSON.put("net_op", NetOp);
+			JSON.put("MCC_MNC", MCC_MNC);
 			JSON.put("net_name", net_name);
 			if (IMSI != null)
 				JSON.put("IMSI", IMSI);
@@ -397,8 +398,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 			// Advanced
 			JSON.put("have_mobile_conn", haveMobileConnection);
 			JSON.put("dconn", dconn);
-			if (!dataNetStr.equals(""))
-				JSON.put("data_net", dataNetStr);
+			// if (!dataNetStr.equals(""))
+			//	JSON.put("data_net", dataNetStr);
 			JSON.put("roaming", mRoaming);
 			// From the cell
 			if (m_cellData.getASU() != Integer.MIN_VALUE)
@@ -411,22 +412,22 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 				JSON.put("BSILon", m_cellData.getBSILon());
 			if (m_cellData.getCi() != Integer.MIN_VALUE)
 				JSON.put("ci", m_cellData.getCi());
-			if (m_cellData.getCID() != Integer.MIN_VALUE)
-				JSON.put("cid", m_cellData.getCID());
+			if (m_cellData.getCid() != Integer.MIN_VALUE)
+				JSON.put("cid", m_cellData.getCid());
 			if (m_cellData.getDbm() != Integer.MIN_VALUE)
-				JSON.put("Dbm", m_cellData.getDbm());
-			if (m_cellData.geteNodeB() != Integer.MIN_VALUE)
-				JSON.put("eNodeB", m_cellData.geteNodeB());
-			if (m_cellData.getLAC() != Integer.MIN_VALUE)
-				JSON.put("lac", m_cellData.getLAC());
+				JSON.put("dbm", m_cellData.getDbm());
+			if (m_cellData.getEnb() != Integer.MIN_VALUE)
+				JSON.put("enb", m_cellData.getEnb());
+			if (m_cellData.getLac() != Integer.MIN_VALUE)
+				JSON.put("lac", m_cellData.getLac());
 			if (m_cellData.getNetID() != Integer.MIN_VALUE)
 				JSON.put("NetID", m_cellData.getNetID());
 			if (m_cellData.getPci() != Integer.MIN_VALUE)
 				JSON.put("pci", m_cellData.getPci());
-			if (m_cellData.getPSC() != Integer.MIN_VALUE)
-				JSON.put("PSC", m_cellData.getPSC());
-			if (m_cellData.getRNC() != Integer.MIN_VALUE)
-				JSON.put("RNC", m_cellData.getRNC());
+			if (m_cellData.getPsc() != Integer.MIN_VALUE)
+				JSON.put("psc", m_cellData.getPsc());
+			if (m_cellData.getRnc() != Integer.MIN_VALUE)
+				JSON.put("rnc", m_cellData.getRnc());
 			if (m_cellData.getSysID() != Integer.MIN_VALUE)
 				JSON.put("SysID", m_cellData.getSysID());
 			if (m_cellData.getTac() != Integer.MIN_VALUE)
@@ -447,12 +448,12 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 					JSON.put("data_activity_dir", m_phoneResponse.getDataActivity_dir());
 				if (m_phoneResponse.getCallState() != Integer.MIN_VALUE)
 					JSON.put("call_state", m_phoneResponse.getCallState());
-				if (m_phoneResponse.getmRX() != Long.MIN_VALUE)
-					JSON.put("RX", m_phoneResponse.getmRX());
-				if (m_phoneResponse.getmTX() != Long.MIN_VALUE)
-					JSON.put("TX", m_phoneResponse.getmTX());
-				if (!m_phoneResponse.getInNum().equals(""))
-					JSON.put("inNum", m_phoneResponse.getInNum());
+				if (m_phoneResponse.getRX() != Long.MIN_VALUE)
+					JSON.put("RX", m_phoneResponse.getRX());
+				if (m_phoneResponse.getTX() != Long.MIN_VALUE)
+					JSON.put("TX", m_phoneResponse.getTX());
+				if (!m_phoneResponse.getClg().equals(""))
+					JSON.put("Clg", m_phoneResponse.getClg());
 			}
 			// return
 			return JSON;
