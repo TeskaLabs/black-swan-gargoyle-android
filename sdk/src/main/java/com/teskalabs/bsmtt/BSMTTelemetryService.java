@@ -5,7 +5,11 @@ import android.app.ActivityManager;
 import android.app.Service;
 import android.content.Intent;
 import android.content.Context;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.TrafficStats;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.RequiresPermission;
 import android.telephony.TelephonyManager;
@@ -13,6 +17,7 @@ import android.util.Log;
 
 import com.teskalabs.bsmtt.cell.CellData;
 import com.teskalabs.bsmtt.connector.Connector;
+import com.teskalabs.bsmtt.location.LocationHelper;
 import com.teskalabs.bsmtt.phonestate.PhoneListener;
 import com.teskalabs.bsmtt.phonestate.PhoneListenerCallback;
 import com.teskalabs.bsmtt.phonestate.PhoneResponse;
@@ -24,7 +29,7 @@ import org.json.JSONObject;
  * This class gets information about the phone and its behavior and sends them to the server when necessary.
  * @author Stepan Hruska, Premysl Cerny
  */
-public class BSMTTelemetryService extends Service implements PhoneListenerCallback {
+public class BSMTTelemetryService extends Service implements PhoneListenerCallback, LocationListener {
 	public static final String LOG_TAG = "BSMTTelemetryService";
 
 	public TelephonyManager TMgr;
@@ -41,6 +46,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	private String MSISDN; // added by Premysl
 	private String iccid;
 	private Long timestamp;
+	private Location mLocation;
 	// Advanced
 	private boolean haveMobileConnection;
 	private String dconn;
@@ -50,18 +56,29 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	private CellData m_cellData; // added by Premysl
 	// Information related to the phone response
 	private PhoneResponse m_phoneResponse; // added by Premysl
-
 	// Listeners
 	PhoneListener PhoneStateListener;
 
-	public BSMTTelemetryService() {
+	/**
+	 * An empty constructor.
+	 */
+	public BSMTTelemetryService() { }
 
-	}
-
+	/**
+	 * Makes sure that all listeners and necessary objects are removed after shutting down the service.
+	 */
 	@Override
 	public void onDestroy() {
+		// Location listener
+		LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
+		if (locationManager != null) {
+			locationManager.removeUpdates(this);
+		}
+		// Phone listener
 		TMgr.listen(PhoneStateListener, android.telephony.PhoneStateListener.LISTEN_NONE);
+		// Connector
 		mConnector.delete();
+		// This
 		super.onDestroy();
 	}
 
@@ -69,7 +86,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 * Runs the service which obtains phone-related data and sends them to a server.
 	 * @param context Context
 	 */
-	@RequiresPermission(allOf = {Manifest.permission.ACCESS_COARSE_LOCATION,
+	@RequiresPermission(allOf = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
 			Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE})
 	public static void run(Context context) {
 		Intent intent = new Intent(context, BSMTTelemetryService.class);
@@ -126,6 +143,11 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		return Service.START_NOT_STICKY;
 	}
 
+	/**
+	 * Takes care of binding the activity and service together.
+	 * @param intent Intent
+	 * @return IBinder
+	 */
 	@Override
 	public IBinder onBind(Intent intent) {
 		return null;
@@ -157,14 +179,13 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 				e.printStackTrace();
 			}
 			// Refreshing variables
-			retrieveBasicPhoneInformation();
-			refreshAdvancedPhoneInformation();
+			refreshAllInfo();
 			// Sending data if necessary
 			sendDataIfNeeded();
 		}
 //		m_phoneResponse = phoneResponse;
 //		// Refreshing variables
-//		refreshAdvancedPhoneInformation();
+//		refreshAllInfo();
 //		// Sending data if necessary
 //		sendDataIfNeeded();
 	}
@@ -181,10 +202,31 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		PhoneStateListener = new PhoneListener(this, TMgr);
 		// Initializing the sending object
 		mConnector = new Connector(this, getResources().getString(R.string.connector_url));
+		// Initializing the location listener
+		mLocation = null;
+		LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
+		if (locationManager != null) {
+			try {
+				locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
+				locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+				mLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+			} catch (SecurityException e) {
+				e.printStackTrace();
+				Log.e(LOG_TAG, getResources().getString(R.string.location_permissions));
+			}
+		}
 		// Initializing the phone listener
 		TMgr.listen(PhoneStateListener,PhoneListener.LISTEN_SIGNAL_STRENGTHS | PhoneListener.LISTEN_CELL_LOCATION |
 				PhoneListener.LISTEN_DATA_CONNECTION_STATE| PhoneListener.LISTEN_DATA_ACTIVITY|
 				PhoneListener.LISTEN_CALL_STATE|PhoneListener.LISTEN_CELL_INFO|PhoneListener.LISTEN_SERVICE_STATE);
+		// Refreshing variables
+		refreshAllInfo();
+	}
+
+	/**
+	 * Refreshes all information that might have changed.
+	 */
+	private void refreshAllInfo() {
 		// Getting the basic phone information
 		retrieveBasicPhoneInformation();
 		// Getting the advanced phone information
@@ -246,16 +288,75 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	}
 
 	/**
+	 * Checks if the current location is accurate enough.
+	 * @return boolean
+	 */
+	private boolean isLocationAccurate() {
+		// Checking the null value
+		if (mLocation == null)
+			return false;
+		// Getting and checking the accuracy
+		return (mLocation.getAccuracy() <= getResources().getInteger(R.integer.location_precision_meters));
+	}
+
+	/**
+	 * Receives a new location update.
+	 * @param location Location
+	 */
+	public void onLocationChanged(Location location) {
+		// Checks if the current location is better than the last one
+		if (mLocation == null) {
+			mLocation = location;
+		} else {
+			if (LocationHelper.isBetterLocation(location, mLocation)) {
+				mLocation = location;
+			} else {
+				return;
+			}
+		}
+		// Refreshing variables
+		refreshAllInfo();
+		// Sending data if necessary
+		sendDataIfNeeded();
+	}
+
+	/**
+	 * Reacts to the location's onStatusChanged event.
+	 * @param provider String
+	 * @param status int
+	 * @param extras Bundle
+	 */
+	public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+	/**
+	 * Reacts to the onProviderEnabled event.
+	 * @param provider String
+	 */
+	public void onProviderEnabled(String provider) {}
+
+	/**
+	 * Reacts to the onProviderDisabled event.
+	 * @param provider String
+	 */
+	public void onProviderDisabled(String provider) {}
+
+
+	/**
 	 * Checks if it is necessary to send the data, and if so, it performs the sending.
 	 */
 	private void sendDataIfNeeded() {
 		// Checking before sending
+		// The phone response must not be empty
 		if (m_phoneResponse == null)
+			return;
+		// The location must be precise enough
+		if (!isLocationAccurate())
 			return;
 		// Getting the data
 		JSONObject JSON = prepareJSONForSending();
 		// Sending the data
 		if (JSON != null) {
+			// Adding the data to the sender
 			mConnector.send(JSON);
 			// Printing the data
 			Log.i(LOG_TAG, JSON.toString());
@@ -271,7 +372,15 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		try {
 			// From the service's variables
 			// Basic
+			// Gravitational field (or spacetime for losers)
 			JSON.put("@timestamp", timestamp);
+			if (mLocation != null) {
+				JSONObject Lattr = new JSONObject();
+				Lattr.put("lat", mLocation.getLatitude());
+				Lattr.put("lon", mLocation.getLongitude());
+				JSON.put("L", Lattr);
+			}
+			// Phone information
 			JSON.put("vendor_model", mVendorModel);
 			JSON.put("phone_type", PhoneTypeStr);
 			JSON.put("net_op", NetOp);
