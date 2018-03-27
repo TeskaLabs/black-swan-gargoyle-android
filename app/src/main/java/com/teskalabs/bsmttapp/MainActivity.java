@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
@@ -13,24 +14,38 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.teskalabs.bsmtt.BSMTTelemetryService;
+import com.teskalabs.bsmtt.messaging.BSMTTListener;
+import com.teskalabs.bsmtt.messaging.BSMTTMessage;
+import com.teskalabs.bsmtt.messaging.BSMTTServiceConnection;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Iterator;
 
 /**
  * Main activity class that calls the BS SDK to gather and send data.
  * @author Premysl Cerny
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	// GPS
 	public static int GPS_SETTINS_INTENT = 200;
 	// Permissions
 	public static int ACCESS_FINE_LOCATION_PERMISSION = 300;
 	public static int READ_PHONE_STATE_PERMISSION = 301;
+	// Connection with the service
+	private BSMTTServiceConnection mConnection;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		// Default values
+		mConnection = null;
 
 		// Preparing the button text
 		Button btn = findViewById(R.id.sendButton);
@@ -45,21 +60,21 @@ public class MainActivity extends AppCompatActivity {
 	public void onButtonClick(View view) {
 		if (isFineLocationPermissionGranted() && isPhoneStatePermissionGranted()) {
 			// GPS enabled
-			if (!checkGPSEnabled() && !BSMTTelemetryService.isRunning(this)) {
+			if (!checkGPSEnabled() && !BSMTTelemetryService.isRunning(MainActivity.this)) {
 				showGPSDisabledAlertToUserAndContinue();
 				return;
 			}
 			// Starting or stopping the service
 			Button btn = findViewById(R.id.sendButton);
-			if (BSMTTelemetryService.isRunning(this)) {
+			if (BSMTTelemetryService.isRunning(MainActivity.this)) {
 				// Stopping the service
-				BSMTTelemetryService.stop(this);
+				BSMTTelemetryService.stop(MainActivity.this, mConnection);
 				// Button text
 				btn.setText(getResources().getString(R.string.btn_start));
 			} else {
 				// Starting the service
 				try {
-					BSMTTelemetryService.run(this);
+					mConnection = BSMTTelemetryService.run(MainActivity.this, this);
 					// Button text
 					btn.setText(getResources().getString(R.string.btn_stop));
 				} catch (SecurityException e) {
@@ -67,6 +82,50 @@ public class MainActivity extends AppCompatActivity {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Reacts to messages sent by the service.
+	 * @param msg Message
+	 * @return boolean
+	 */
+	@Override
+	public boolean onReceiveMessage(Message msg) {
+		// Processing the JSON event
+		if (msg.what == BSMTTMessage.MSG_JSON_EVENT) {
+			JSONObject JSON = (JSONObject)msg.obj;
+			showDataFromJSON(JSON);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Shows data to the user from a JSON event.
+	 * @param JSON JSONObject
+	 */
+	private void showDataFromJSON(JSONObject JSON) {
+		// Getting the view
+		TextView logView = findViewById(R.id.logView);
+		// Iterating through the JSON
+		StringBuilder newText = new StringBuilder();
+		Iterator<String> iterator = JSON.keys();
+		while (iterator.hasNext()) {
+			String key = iterator.next();
+			try {
+				Object value = JSON.get(key);
+				newText.append(key);
+				newText.append(": ");
+				newText.append(value.toString());
+				newText.append("\n");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		newText.append("\n");
+		newText.append(logView.getText().toString());
+		// Showing the text to the user
+		logView.setText(newText);
 	}
 
 	// GPS location --------------------------------------------------------------------------------

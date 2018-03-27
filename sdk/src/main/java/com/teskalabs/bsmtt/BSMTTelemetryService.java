@@ -11,6 +11,7 @@ import android.location.LocationManager;
 import android.net.TrafficStats;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Messenger;
 import android.support.annotation.RequiresPermission;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -18,6 +19,12 @@ import android.util.Log;
 import com.teskalabs.bsmtt.cell.CellData;
 import com.teskalabs.bsmtt.connector.Connector;
 import com.teskalabs.bsmtt.location.LocationHelper;
+import com.teskalabs.bsmtt.messaging.BSMTTClientHandler;
+import com.teskalabs.bsmtt.messaging.BSMTTListener;
+import com.teskalabs.bsmtt.messaging.BSMTTMessage;
+import com.teskalabs.bsmtt.messaging.BSMTTServerHandler;
+import com.teskalabs.bsmtt.messaging.BSMTTServiceConnection;
+import com.teskalabs.bsmtt.messaging.BSMTTelemetryServiceBinder;
 import com.teskalabs.bsmtt.phonestate.PhoneListener;
 import com.teskalabs.bsmtt.phonestate.PhoneListenerCallback;
 import com.teskalabs.bsmtt.phonestate.PhoneResponse;
@@ -57,12 +64,20 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	// Information related to the phone response
 	private PhoneResponse m_phoneResponse; // added by Premysl
 	// Listeners
-	PhoneListener PhoneStateListener;
+	private PhoneListener PhoneStateListener;
+	// Connection with activities
+	private IBinder mBinder;
+	private BSMTTServerHandler mMessengerServer;
 
 	/**
-	 * An empty constructor.
+	 * A basic constructor.
 	 */
-	public BSMTTelemetryService() { }
+	public BSMTTelemetryService() {
+		// Messaging
+		mMessengerServer = new BSMTTServerHandler();
+		Messenger messenger = new Messenger(mMessengerServer);
+		mBinder = new BSMTTelemetryServiceBinder(messenger);
+	}
 
 	/**
 	 * Makes sure that all listeners and necessary objects are removed after shutting down the service.
@@ -88,17 +103,32 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
 			Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE})
-	public static void run(Context context) {
+	public static BSMTTServiceConnection run(Context context, BSMTTListener listener) {
+		// Starting the service
 		Intent intent = new Intent(context, BSMTTelemetryService.class);
 		context.startService(intent);
+		// Binding the service
+		try {
+			Messenger receiveMessenger = new Messenger(new BSMTTClientHandler(listener));
+			BSMTTServiceConnection connection = new BSMTTServiceConnection(receiveMessenger);
+			context.bindService(intent, connection, Context.BIND_AUTO_CREATE);
+			return connection;
+		} catch (SecurityException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	/**
 	 * Stops the service.
 	 * @param context Context
 	 */
-	public static void stop(Context context) {
+	public static void stop(Context context, BSMTTServiceConnection connection) {
 		Intent intent = new Intent(context, BSMTTelemetryService.class);
+		// Unbinding
+		if (connection != null)
+			context.unbindService(connection);
+		// Stopping
 		context.stopService(intent);
 	}
 
@@ -150,7 +180,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	@Override
 	public IBinder onBind(Intent intent) {
-		return null;
+		return mBinder;
 	}
 
 	/**
@@ -359,6 +389,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		if (JSON != null) {
 			// Adding the data to the sender
 			mConnector.send(JSON);
+			// Passing the data to activities
+			mMessengerServer.sendMessage(BSMTTMessage.MSG_JSON_EVENT, JSON);
 			// Printing the data
 			Log.i(LOG_TAG, JSON.toString());
 		}
