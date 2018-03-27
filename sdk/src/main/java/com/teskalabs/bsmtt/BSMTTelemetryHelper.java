@@ -155,6 +155,17 @@ public class BSMTTelemetryHelper {
 		}
 	}
 
+	public static boolean isNetworkAvailable(Context context) {
+		try {
+			ConnectivityManager connectivityManager
+					= (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+			return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+		} catch (NullPointerException e) {
+			return false;
+		}
+	}
+
 	// Loading information -------------------------------------------------------------------------
 
 	public static String getPhoneVendorModel(){
