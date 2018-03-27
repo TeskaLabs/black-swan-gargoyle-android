@@ -17,12 +17,22 @@ public class PhoneListener extends PhoneStateListener
 	private TelephonyManager m_telephonyManager;
 	private PhoneResponse m_phoneResponse;
 
+	/**
+	 * Saves the callback and the telephony manager.
+	 * @param phoneListenerCallback PhoneListenerCallback
+	 * @param telephonyManager TelephonyManager
+	 */
 	public PhoneListener(PhoneListenerCallback phoneListenerCallback, TelephonyManager telephonyManager) {
 		m_phoneListenerCallback = phoneListenerCallback;
 		m_telephonyManager = telephonyManager;
 		m_phoneResponse = new PhoneResponse();
 	}
 
+	/**
+	 * Reactions to the change of data connection.
+	 * @param state int
+	 * @param networkType int
+	 */
 	@Override
 	public void onDataConnectionStateChanged(int state, int networkType) {
 		m_phoneResponse.setData_state(state);
@@ -39,17 +49,24 @@ public class PhoneListener extends PhoneStateListener
 		super.onDataConnectionStateChanged(state, networkType);
 	}
 
+	/**
+	 * Reactions about changes to cell identity.
+	 * @param cellInfo List<CellInfo>
+	 */
 	@Override
-	public void onCellInfoChanged(List< CellInfo > cellInfo) {
+	public void onCellInfoChanged(List<CellInfo> cellInfo) {
 		super.onCellInfoChanged(cellInfo);
 		//note: Cell Info is not available for all devices. Therefore TelephonyManager is used in UpdateScreen()
 		m_phoneResponse.setCellInfo(cellInfo);
 		m_phoneListenerCallback.onPhoneResponseChange(m_phoneResponse);
 	}
 
+	/**
+	 * Reactions to the change of signal strength.
+	 * @param signalStrength SignalStrength
+	 */
 	@Override
 	public void onSignalStrengthsChanged(android.telephony.SignalStrength signalStrength) {
-
 		// get the signal strength (a value between 0 and 31)
 		int nType = m_telephonyManager.getNetworkType();
 		String ssignal = signalStrength.toString();
@@ -67,6 +84,10 @@ public class PhoneListener extends PhoneStateListener
 		super.onSignalStrengthsChanged(signalStrength);
 	}
 
+	/**
+	 * Reactions to cell location changes.
+	 * @param cellLocation CellLocation
+	 */
 	@Override
 	public void onCellLocationChanged(android.telephony.CellLocation cellLocation){
 		//cell_loc = (GsmCellLocation)cellLocation;
@@ -75,6 +96,10 @@ public class PhoneListener extends PhoneStateListener
 		super.onCellLocationChanged(cellLocation);
 	}
 
+	/**
+	 * Reactions to data activity.
+	 * @param direction int
+	 */
 	@Override
 	public void onDataActivity(int direction){
 		m_phoneResponse.setDataActivity_dir(direction);
@@ -82,6 +107,11 @@ public class PhoneListener extends PhoneStateListener
 		super.onDataActivity(direction);
 	}
 
+	/**
+	 * Reactions to the change of call state.
+	 * @param state int
+	 * @param incomingNumber String
+	 */
 	@Override
 	public void onCallStateChanged(int state, String incomingNumber){
 		super.onCallStateChanged(state, incomingNumber);

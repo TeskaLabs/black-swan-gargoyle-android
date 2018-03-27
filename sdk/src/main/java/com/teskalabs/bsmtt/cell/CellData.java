@@ -22,11 +22,19 @@ public class CellData implements Cloneable {
 	private int eNodeB;
 	private int TimAdv;
 
+	/**
+	 * Clones the object so two references may work with separate data.
+	 * @return CellData
+	 * @throws CloneNotSupportedException If not supported.
+	 */
 	@Override
 	public CellData clone() throws CloneNotSupportedException {
 		return (CellData)super.clone();
 	}
 
+	/**
+	 * Initial data.
+	 */
 	public CellData() {
 		CID = Integer.MIN_VALUE;
 		LAC = Integer.MIN_VALUE;

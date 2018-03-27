@@ -35,22 +35,47 @@ public class BSMTTelemetryHelper {
 
 	// Getting information from variables ----------------------------------------------------------
 
+	/**
+	 * Returns information about RNCid.
+	 * @param cid int
+	 * @return int
+	 */
 	public static int getRNCid(int cid){
 		return cid >> 16;
 	}
 
+	/**
+	 * Returns information about UMTScid.
+	 * @param cid int
+	 * @return int
+	 */
 	public static int getUMTScid(int cid){
 		return cid & 0xffff;
 	}
 
+	/**
+	 * Returns information about LteCid.
+	 * @param eci int
+	 * @return int
+	 */
 	public static int getLteCid(int eci){
 		return eci & 0xff;
 	}
 
+	/**
+	 * Returns information about ENodeB.
+	 * @param eci int
+	 * @return int
+	 */
 	public static int getLteENodeB(int eci){
 		return eci >> 8;
 	}
 
+	/**
+	 * Transforms string rem to pct.
+	 * @param inStr String
+	 * @return String
+	 */
 	public static String str_rem_pct(String inStr){
 		String res = inStr;
 		if (inStr.indexOf("%") > 0){
@@ -59,6 +84,11 @@ public class BSMTTelemetryHelper {
 		return res;
 	}
 
+	/**
+	 * Returns the call state as String.
+	 * @param callstate int
+	 * @return String
+	 */
 	public static String getCallState(int callstate){
 		String CallState;
 		switch (callstate) {
@@ -70,6 +100,11 @@ public class BSMTTelemetryHelper {
 		return CallState;
 	}
 
+	/**
+	 * Returns the data state as String.
+	 * @param tm TelephonyManager
+	 * @return String
+	 */
 	public static String getDataState(TelephonyManager tm){
 		String dconn = "Unknown";
 		switch (tm.getDataState()) {
@@ -91,6 +126,11 @@ public class BSMTTelemetryHelper {
 		return dconn;
 	}
 
+	/**
+	 * Returns the network type as String.
+	 * @param dataNetworkType int
+	 * @return String
+	 */
 	public static String getNetworkType(int dataNetworkType){
 		String dataNetStr;
 		switch(dataNetworkType){
@@ -115,6 +155,11 @@ public class BSMTTelemetryHelper {
 		return dataNetStr;
 	}
 
+	/**
+	 * Returns the pre-formatted phone type as String.
+	 * @param telephonyManager TelephonyManager
+	 * @return String
+	 */
 	public static String getPhoneTypeStr(TelephonyManager telephonyManager) {
 		int phone_type = telephonyManager.getPhoneType();
 		String PhoneTypeStr;
@@ -139,6 +184,11 @@ public class BSMTTelemetryHelper {
 		return PhoneTypeStr;
 	}
 
+	/**
+	 * Checks if there is a mobile (data) connection.
+	 * @param context Context
+	 * @return boolean
+	 */
 	public static boolean haveMobileConnection(Context context){
 		boolean haveMobile = false;
 		try {
@@ -155,6 +205,11 @@ public class BSMTTelemetryHelper {
 		}
 	}
 
+	/**
+	 * Checks if the network connection is available.
+	 * @param context Context
+	 * @return boolean
+	 */
 	public static boolean isNetworkAvailable(Context context) {
 		try {
 			ConnectivityManager connectivityManager
@@ -168,6 +223,10 @@ public class BSMTTelemetryHelper {
 
 	// Loading information -------------------------------------------------------------------------
 
+	/**
+	 * Returns the phone's vendor model.
+	 * @return String
+	 */
 	public static String getPhoneVendorModel(){
 		String mMoldel = Build.MODEL;
 		String mManufacturer = Build.MANUFACTURER;
@@ -210,6 +269,12 @@ public class BSMTTelemetryHelper {
 		}
 	}
 
+	/**
+	 * Gets the cell identity data along with some information.
+	 * @param currentData CellData
+	 * @param telephonyManager TelephonyManager
+	 * @return CellData
+	 */
 	public static CellData getCellSignal(CellData currentData, TelephonyManager telephonyManager) {
 		try {
 			List<CellInfo> ACInfo = telephonyManager.getAllCellInfo();

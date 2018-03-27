@@ -25,11 +25,19 @@ public class PhoneResponse implements Cloneable {
 	private android.telephony.CellLocation cellLocation;
 	private List<CellInfo> cellInfo;
 
+	/**
+	 * Clones the object so two references may work with separate data.
+	 * @return CellData
+	 * @throws CloneNotSupportedException If not supported.
+	 */
 	@Override
 	public PhoneResponse clone() throws CloneNotSupportedException {
 		return (PhoneResponse)super.clone();
 	}
 
+	/**
+	 * Basic constructor with initialization data.
+	 */
 	public PhoneResponse() {
 		data_state = Integer.MIN_VALUE;
 		data_networkType = Integer.MIN_VALUE;

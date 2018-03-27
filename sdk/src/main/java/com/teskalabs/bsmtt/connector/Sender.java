@@ -16,20 +16,36 @@ public class Sender extends AsyncTask<JSONObject, String, Boolean> {
 
 	private Connector mConnector;
 
+	/**
+	 * The basic constructor that receives the Connector.
+	 * @param connector Connector
+	 */
 	public Sender(Connector connector) {
 		mConnector = connector;
 	}
 
+	/**
+	 * Actions before the execution of the async task.
+	 */
 	@Override
 	protected void onPreExecute() {
 		super.onPreExecute();
 	}
 
+	/**
+	 * Refreshes sending after the execution of the async task.
+	 * @param result Boolean
+	 */
 	@Override
 	protected void onPostExecute(Boolean result) {
 		mConnector.refreshSending();
 	}
 
+	/**
+	 * Performs sending of the JSON data.
+	 * @param params JSONObject...
+	 * @return Boolean
+	 */
 	@Override
 	protected Boolean doInBackground(JSONObject... params) {
 		JSONObject JSON = params[0];

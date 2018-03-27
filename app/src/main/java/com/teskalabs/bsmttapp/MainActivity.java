@@ -16,6 +16,10 @@ import android.widget.Button;
 
 import com.teskalabs.bsmtt.BSMTTelemetryService;
 
+/**
+ * Main activity class that calls the BS SDK to gather and send data.
+ * @author Premysl Cerny
+ */
 public class MainActivity extends AppCompatActivity {
 	// GPS
 	public static int GPS_SETTINS_INTENT = 200;

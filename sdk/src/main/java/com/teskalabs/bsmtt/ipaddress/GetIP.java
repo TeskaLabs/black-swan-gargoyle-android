@@ -25,16 +25,25 @@ import java.util.Enumeration;
  * @author Stepan Hruska, Premysl Cerny
  */
 public class GetIP extends AsyncTask<String, String, String> {
-	static final String LOG_TAG = "BSInfoSDK - GetIP";
+	static final String LOG_TAG = "BSMTTelemetryGetIP";
 	public static int FLAG_IPV4 = 0;
 	public static int FLAG_IPV6 = 0;
 
 	private GetIPCallback m_getIPCallback;
 
+	/**
+	 * Basic constructor.
+	 * @param getIPCallback GetIPCallback
+	 */
 	public GetIP(GetIPCallback getIPCallback) {
 		m_getIPCallback = getIPCallback;
 	}
 
+	/**
+	 * Gets information about the server's IP address and DNS.
+	 * @param params String...
+	 * @return String
+	 */
 	@Override
 	protected String doInBackground(String... params) {
 		String mIP;
@@ -155,11 +164,18 @@ public class GetIP extends AsyncTask<String, String, String> {
 		return null;
 	}
 
+	/**
+	 * Actions before the execution of the async tasks.
+	 */
 	@Override
 	protected void onPreExecute() {
 		super.onPreExecute();
 	}
 
+	/**
+	 * Actions after the execution of the async task.
+	 * @param s String
+	 */
 	@Override
 	protected void onPostExecute(String s) {
 		super.onPostExecute(s);

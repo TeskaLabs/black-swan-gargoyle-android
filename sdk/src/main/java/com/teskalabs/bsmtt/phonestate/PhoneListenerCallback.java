@@ -5,5 +5,9 @@ package com.teskalabs.bsmtt.phonestate;
  * @author Premysl Cerny
  */
 public interface PhoneListenerCallback {
+	/**
+	 * Receives the phone response with appropriate information.
+	 * @param phoneResponse PhoneResponse
+	 */
 	void onPhoneResponseChange(PhoneResponse phoneResponse);
 }
