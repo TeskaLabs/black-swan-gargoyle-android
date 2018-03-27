@@ -59,15 +59,17 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 
 	@Override
 	public void onDestroy() {
-		super.onDestroy();
 		TMgr.listen(PhoneStateListener, android.telephony.PhoneStateListener.LISTEN_NONE);
+		mConnector.delete();
+		super.onDestroy();
 	}
 
 	/**
 	 * Runs the service which obtains phone-related data and sends them to a server.
 	 * @param context Context
 	 */
-	@RequiresPermission(allOf = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE})
+	@RequiresPermission(allOf = {Manifest.permission.ACCESS_COARSE_LOCATION,
+			Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE})
 	public static void run(Context context) {
 		Intent intent = new Intent(context, BSMTTelemetryService.class);
 		context.startService(intent);
@@ -91,7 +93,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		ActivityManager manager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
 		try {
 			for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-				if ("com.teskalabs.mtt.BSMTTelemetryService".equals(service.service.getClassName())) {
+				if ("com.teskalabs.bsmtt.BSMTTelemetryService".equals(service.service.getClassName())) {
 					return true;
 				}
 			}
@@ -176,7 +178,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		TMgr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
 		PhoneStateListener = new PhoneListener(this, TMgr);
 		// Initializing the sending object
-		mConnector = new Connector(getResources().getString(R.string.connector_url));
+		mConnector = new Connector(this, getResources().getString(R.string.connector_url));
 		// Initializing the phone listener
 		TMgr.listen(PhoneStateListener,PhoneListener.LISTEN_SIGNAL_STRENGTHS | PhoneListener.LISTEN_CELL_LOCATION |
 				PhoneListener.LISTEN_DATA_CONNECTION_STATE| PhoneListener.LISTEN_DATA_ACTIVITY|

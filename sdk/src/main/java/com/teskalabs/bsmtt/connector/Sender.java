@@ -32,11 +32,11 @@ public class Sender extends AsyncTask<JSONObject, String, Boolean> {
 
 	@Override
 	protected Boolean doInBackground(JSONObject... params) {
-		try {
-			JSONObject JSON = params[0];
-			if (JSON == null)
-				return false;
+		JSONObject JSON = params[0];
+		if (JSON == null)
+			return false;
 
+		try {
 			// Preparing the connection
 			URL url = new URL(mConnector.getUrl());
 			HttpURLConnection conn = (HttpURLConnection)url.openConnection();
@@ -62,6 +62,8 @@ public class Sender extends AsyncTask<JSONObject, String, Boolean> {
 
 		} catch (Exception e) {
 			e.printStackTrace();
+			// save to the queue again
+			mConnector.send(JSON);
 			return false;
 		}
 
