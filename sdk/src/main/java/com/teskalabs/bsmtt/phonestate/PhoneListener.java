@@ -24,7 +24,7 @@ public class PhoneListener extends PhoneStateListener
 	}
 
 	@Override
-	public void onDataConnectionStateChanged(int state,int networkType) {
+	public void onDataConnectionStateChanged(int state, int networkType) {
 		m_phoneResponse.setData_state(state);
 		m_phoneResponse.setData_networkType(networkType);
 		long txBytes = TrafficStats.getMobileTxBytes();
@@ -38,7 +38,6 @@ public class PhoneListener extends PhoneStateListener
 
 		super.onDataConnectionStateChanged(state, networkType);
 	}
-
 
 	@Override
 	public void onCellInfoChanged(List< CellInfo > cellInfo) {
