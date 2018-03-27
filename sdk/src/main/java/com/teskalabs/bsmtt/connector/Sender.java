@@ -12,7 +12,7 @@ import java.net.URL;
  * @author Premysl Cerny
  */
 public class Sender extends AsyncTask<JSONObject, String, Boolean> {
-	public static final String LOG_TAG = "BSInfoSDK - Sender";
+	public static final String LOG_TAG = "BSMTTelemetrySender";
 
 	private Connector mConnector;
 
