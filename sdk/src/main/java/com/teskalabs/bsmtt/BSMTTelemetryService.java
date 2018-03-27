@@ -31,7 +31,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	public Connector mConnector;
 
 	// Information related to the phone itself
-	// Basic ("static")
+	// Basic (dimensions)
 	private String mVendorModel;
 	private String PhoneTypeStr;
 	private String NetOp;
@@ -40,8 +40,9 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	private String IMEI;
 	private String MSISDN; // added by Premysl
 	private String iccid;
+	private Long timestamp;
+	// Advanced
 	private boolean haveMobileConnection;
-	// Advanced ("dynamic")
 	private String dconn;
 	private String dataNetStr;
 	private String mRoaming; // added by Premysl
@@ -156,6 +157,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 				e.printStackTrace();
 			}
 			// Refreshing variables
+			retrieveBasicPhoneInformation();
 			refreshAdvancedPhoneInformation();
 			// Sending data if necessary
 			sendDataIfNeeded();
@@ -190,9 +192,10 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	}
 
 	/**
-	 * Gets the basic information about the phone that rarely change.
+	 * Gets the basic information about the phone (dimensions).
 	 */
 	private void retrieveBasicPhoneInformation() {
+		// Phone information
 		try {
 			mVendorModel = BSMTTelemetryHelper.getPhoneVendorModel();
 			PhoneTypeStr = BSMTTelemetryHelper.getPhoneTypeStr(TMgr);
@@ -203,6 +206,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		} catch (SecurityException e) {
 			e.printStackTrace();
 		}
+		// Timestamp
+		timestamp = System.currentTimeMillis();
 	}
 
 	/**
@@ -266,6 +271,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		try {
 			// From the service's variables
 			// Basic
+			JSON.put("@timestamp", timestamp);
 			JSON.put("vendor_model", mVendorModel);
 			JSON.put("phone_type", PhoneTypeStr);
 			JSON.put("net_op", NetOp);
@@ -278,8 +284,9 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 				JSON.put("MSISDN", MSISDN);
 			if (iccid != null)
 				JSON.put("iccid", iccid);
-			JSON.put("have_mobile_conn", haveMobileConnection);
+
 			// Advanced
+			JSON.put("have_mobile_conn", haveMobileConnection);
 			JSON.put("dconn", dconn);
 			if (!dataNetStr.equals(""))
 				JSON.put("data_net", dataNetStr);
@@ -296,13 +303,13 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 			if (m_cellData.getCi() != Integer.MIN_VALUE)
 				JSON.put("ci", m_cellData.getCi());
 			if (m_cellData.getCID() != Integer.MIN_VALUE)
-				JSON.put("CID", m_cellData.getCID());
+				JSON.put("cid", m_cellData.getCID());
 			if (m_cellData.getDbm() != Integer.MIN_VALUE)
 				JSON.put("Dbm", m_cellData.getDbm());
 			if (m_cellData.geteNodeB() != Integer.MIN_VALUE)
 				JSON.put("eNodeB", m_cellData.geteNodeB());
 			if (m_cellData.getLAC() != Integer.MIN_VALUE)
-				JSON.put("LAC", m_cellData.getLAC());
+				JSON.put("lac", m_cellData.getLAC());
 			if (m_cellData.getNetID() != Integer.MIN_VALUE)
 				JSON.put("NetID", m_cellData.getNetID());
 			if (m_cellData.getPci() != Integer.MIN_VALUE)
