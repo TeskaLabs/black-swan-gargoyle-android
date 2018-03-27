@@ -1,5 +1,12 @@
 <resources>
-    <string name="app_name">Black Swan Data Sender</string>
+    <string name="app_name">Black Swan Mobile Terminal Telemetry</string>
+
+    <!-- Gathering the information -->
     <string name="btn_start">Start sending</string>
     <string name="btn_stop">Stop sending</string>
+
+    <!-- GPS location -->
+    <string name="gps_not_allowed">The GPS is not allowed on your device. Would you like to enable it now?</string>
+    <string name="gps_enable_ok">Go to Settings Page</string>
+
 </resources>
