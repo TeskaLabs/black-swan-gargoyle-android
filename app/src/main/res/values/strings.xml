@@ -5,6 +5,10 @@
     <string name="btn_start">Start sending</string>
     <string name="btn_stop">Stop sending</string>
 
+    <!-- View pager -->
+    <string name="fragment_info">Info</string>
+    <string name="fragment_log">Log</string>
+
     <!-- GPS location -->
     <string name="gps_not_allowed">The GPS is not allowed on your device. Would you like to enable it now?</string>
     <string name="gps_enable_ok">Go to Settings Page</string>

@@ -8,7 +8,9 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,6 +22,8 @@ import com.teskalabs.bsmtt.BSMTTelemetryService;
 import com.teskalabs.bsmtt.messaging.BSMTTListener;
 import com.teskalabs.bsmtt.messaging.BSMTTMessage;
 import com.teskalabs.bsmtt.messaging.BSMTTServiceConnection;
+import com.teskalabs.bsmttapp.fragments.FragmentLog;
+import com.teskalabs.bsmttapp.fragments.ViewPagerAdapter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,6 +42,8 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	public static int READ_PHONE_STATE_PERMISSION = 301;
 	// Connection with the service
 	private BSMTTServiceConnection mConnection;
+	// JSON showing
+	private boolean wasFirstJSON;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -46,11 +52,24 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 
 		// Default values
 		mConnection = null;
+		wasFirstJSON = false;
 
 		// Preparing the button text
 		Button btn = findViewById(R.id.sendButton);
 		if (BSMTTelemetryService.isRunning(this))
 			btn.setText(getResources().getString(R.string.btn_stop));
+
+		// View pager
+		ViewPager viewPager = findViewById(R.id.pager);
+		ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+
+		// Add Fragments to adapter one by one
+		adapter.addFragment(new FragmentLog(), getResources().getString(R.string.fragment_log));
+		viewPager.setAdapter(adapter);
+
+		// Adding tabs
+		TabLayout tabLayout = findViewById(R.id.tabs);
+		tabLayout.setupWithViewPager(viewPager);
 	}
 
 	/**
@@ -107,8 +126,10 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	private void showDataFromJSON(JSONObject JSON) {
 		// Getting the view
 		TextView logView = findViewById(R.id.logView);
-		// Iterating through the JSON
+		// Preparing variables
+		String oldText = logView.getText().toString();
 		StringBuilder newText = new StringBuilder();
+		// Iterating through the JSON
 		Iterator<String> iterator = JSON.keys();
 		while (iterator.hasNext()) {
 			String key = iterator.next();
@@ -117,14 +138,19 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 				newText.append(key);
 				newText.append(": ");
 				newText.append(value.toString());
-				newText.append("\n");
+				if (wasFirstJSON || iterator.hasNext())
+					newText.append("\n");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 		}
-		newText.append("\n");
-		newText.append(logView.getText().toString());
+		// Appending the old text
+		if (!oldText.equals("")) {
+			newText.append("\n");
+			newText.append(oldText);
+		}
 		// Showing the text to the user
+		wasFirstJSON = true;
 		logView.setText(newText);
 	}
 
