@@ -9,7 +9,7 @@ public class BasicEvent extends JsonEvent {
 	 * A basic constructor.
 	 */
 	public BasicEvent() {
-		super();
+		super(BSMTTEvents.BASIC_EVENT);
 	}
 
 	/**

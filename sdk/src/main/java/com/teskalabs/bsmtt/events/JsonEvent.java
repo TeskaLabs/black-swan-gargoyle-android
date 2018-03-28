@@ -73,13 +73,16 @@ public abstract class JsonEvent {
 	/**
 	 * A basic constructor.
 	 */
-	protected JsonEvent() {
+	protected JsonEvent(int type) {
 		mReady = false;
 		mDimensionsChanged = false;
 		mJSONEvent = new JSONObject();
 		// Dimensions first
 		try {
+			// Gravitational field (or spacetime for losers)
 			mJSONEvent.put("@timestamp", System.currentTimeMillis());
+			mJSONEvent.put("L", new JSONObject());
+			mJSONEvent.put("event_type", type);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
