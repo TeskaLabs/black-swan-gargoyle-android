@@ -8,11 +8,13 @@
     tools:context="com.teskalabs.bsmttapp.MainActivity">
 
     <RelativeLayout
-        android:padding="@dimen/main_padding"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <Button
+            android:layout_marginTop="@dimen/small_padding"
+            android:layout_marginLeft="@dimen/main_padding"
+            android:layout_marginRight="@dimen/main_padding"
             android:id="@+id/sendButton"
             android:onClick="onButtonClick"
             android:layout_width="wrap_content"
@@ -34,7 +36,10 @@
             app:tabSelectedTextColor="@color/colorAccent" />
 
         <android.support.v4.view.ViewPager
+            android:layout_marginLeft="@dimen/main_padding"
+            android:layout_marginRight="@dimen/main_padding"
             android:layout_marginTop="@dimen/small_padding"
+            android:layout_marginBottom="@dimen/small_padding"
             android:layout_below="@id/tabs"
             android:id="@+id/pager"
             android:layout_width="match_parent"
