@@ -85,6 +85,22 @@ public class BSMTTelemetryHelper {
 	}
 
 	/**
+	 * Gets roaming state.
+	 * @param roaming int
+	 * @return String
+	 */
+	public static String getRoaming(int roaming) {
+		switch (roaming) {
+			case 0:
+				return "Home network";
+			case 1:
+				return "Roaming";
+			default:
+				return "Unknown";
+		}
+	}
+
+	/**
 	 * Returns the call state as String.
 	 * @param callstate int
 	 * @return String
@@ -108,6 +124,32 @@ public class BSMTTelemetryHelper {
 	public static String getDataState(TelephonyManager tm){
 		String dconn = "Unknown";
 		switch (tm.getDataState()) {
+			case TelephonyManager.DATA_CONNECTED:
+				dconn="Connected";
+				break;
+			case TelephonyManager.DATA_CONNECTING:
+				dconn="Connecting";
+				break;
+			case TelephonyManager.DATA_DISCONNECTED:
+				dconn="Disconnected";
+				break;
+			case TelephonyManager.DATA_SUSPENDED:
+				dconn="Suspended";
+				break;
+			default:
+				break;
+		}
+		return dconn;
+	}
+
+	/**
+	 * Returns the data state as String.
+	 * @param data_state int
+	 * @return String
+	 */
+	public static String getDataState(int data_state){
+		String dconn = "Unknown";
+		switch (data_state) {
 			case TelephonyManager.DATA_CONNECTED:
 				dconn="Connected";
 				break;

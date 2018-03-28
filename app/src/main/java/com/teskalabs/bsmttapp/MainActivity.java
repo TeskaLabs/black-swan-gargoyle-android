@@ -154,6 +154,8 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 					JSON.put("iccid", null);
 					JSON.put("MCC_MNC", null);
 					JSON.put("net_name", null);
+					// Get lookups
+					JSON = BSMTTEvents.lookupFormatter(JSON);
 					// Showing
 					showDataInLog(JSON);
 				}
