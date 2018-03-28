@@ -16,6 +16,7 @@ public class Connector implements InternetConnectivityListener {
 	private Deque<JSONObject> mQueue;
 	private String mUrl;
 	private boolean isSending;
+	private boolean isReady;
 	private Sender mSender;
 	private boolean mConnected;
 
@@ -28,6 +29,7 @@ public class Connector implements InternetConnectivityListener {
 		mUrl = url;
 		mQueue = new ArrayDeque<>();
 		isSending = false;
+		isReady = false;
 		mConnected = false;
 		mSender = null;
 		// Connection
@@ -51,6 +53,21 @@ public class Connector implements InternetConnectivityListener {
 	}
 
 	/**
+	 * Notifies the connector that the sending may begin.
+	 */
+	public void setReady() {
+		isReady = true;
+		run();
+	}
+
+	/**
+	 * Notifies the connector that the sending is not ready.
+	 */
+	public void unsetReady() {
+		isReady = false;
+	}
+
+	/**
 	 * Adds an item to the queue to be sent.
 	 * @param JSON JSONObject
 	 */
@@ -64,6 +81,8 @@ public class Connector implements InternetConnectivityListener {
 	 * The data are sent only when there is a connection.
 	 */
 	private void run() {
+		if (!isReady)
+			return;
 		if (mConnected) {
 			if (!isSending) {
 				JSONObject JSON = mQueue.pollFirst();

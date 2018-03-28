@@ -3,8 +3,10 @@ package com.teskalabs.bsmtt;
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -30,13 +32,13 @@ import com.teskalabs.bsmtt.events.PhoneEvent;
 import com.teskalabs.bsmtt.location.LocationHelper;
 import com.teskalabs.bsmtt.messaging.BSMTTClientHandler;
 import com.teskalabs.bsmtt.messaging.BSMTTListener;
-import com.teskalabs.bsmtt.messaging.BSMTTMessage;
 import com.teskalabs.bsmtt.messaging.BSMTTServerHandler;
 import com.teskalabs.bsmtt.messaging.BSMTTServiceConnection;
 import com.teskalabs.bsmtt.messaging.BSMTTelemetryServiceBinder;
 import com.teskalabs.bsmtt.phonestate.PhoneListener;
 import com.teskalabs.bsmtt.phonestate.PhoneListenerCallback;
 import com.teskalabs.bsmtt.phonestate.PhoneResponse;
+import com.teskalabs.seacat.android.client.SeaCatClient;
 
 /**
  * This class gets information about the phone and its behavior and sends them to the server when necessary.
@@ -55,6 +57,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	private TelephonyManager TMgr;
 	// Sending data
 	private Connector mConnector;
+	private BroadcastReceiver mSeaCatReceiver;
 	// Listeners
 	private PhoneListener PhoneStateListener;
 	// Connection with activities
@@ -91,6 +94,10 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		TMgr.listen(PhoneStateListener, android.telephony.PhoneStateListener.LISTEN_NONE);
 		// Connector
 		mConnector.delete();
+		if (mSeaCatReceiver != null) {
+			unregisterReceiver(mSeaCatReceiver);
+			mSeaCatReceiver = null;
+		}
 		// This
 		super.onDestroy();
 	}
@@ -163,9 +170,47 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 					|| !BSMTTelemetryHelper.isPhoneStatePermissionGranted(this)) {
 				Log.e(LOG_TAG, getResources().getString(R.string.log_permissions));
 				stopSelf();
+			} else {
+				// Initializing the sending object
+				mConnector = new Connector(this, getResources().getString(R.string.connector_url));
+				// Registering the SeaCat receiver
+				IntentFilter intentFilter = new IntentFilter();
+				intentFilter.addAction(SeaCatClient.ACTION_SEACAT_STATE_CHANGED);
+				intentFilter.addAction(SeaCatClient.ACTION_SEACAT_CSR_NEEDED);
+				intentFilter.addAction(SeaCatClient.ACTION_SEACAT_CLIENTID_CHANGED);
+				intentFilter.addCategory(SeaCatClient.CATEGORY_SEACAT);
+				if (isSeaCatReady(SeaCatClient.getState())) {
+					mConnector.setReady(); // we are ready to send data!
+				}
+				mSeaCatReceiver = new BroadcastReceiver() {
+					@Override
+					public void onReceive(Context context, Intent intent) {
+						if (intent.hasCategory(SeaCatClient.CATEGORY_SEACAT)) {
+							String action = intent.getAction();
+							if (action.equals(SeaCatClient.ACTION_SEACAT_STATE_CHANGED)) {
+								String state = intent.getStringExtra(SeaCatClient.EXTRA_STATE);
+								if (isSeaCatReady(state)) {
+									mConnector.setReady(); // we are ready to send data!
+								} else {
+									mConnector.unsetReady();
+								}
+							}
+						}
+					}
+				};
+				registerReceiver(mSeaCatReceiver, intentFilter);
 			}
 		}
 		return Service.START_NOT_STICKY;
+	}
+
+	/**
+	 * Checks if the SeaCat is ready.
+	 * @param state String
+	 * @return boolean
+	 */
+	private boolean isSeaCatReady(String state) {
+		return ((state.charAt(3) == 'Y') && (state.charAt(4) == 'N') && (state.charAt(0) != 'f'));
 	}
 
 	/**
@@ -214,8 +259,6 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		// Getting the objects where we are getting the information from
 		TMgr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
 		PhoneStateListener = new PhoneListener(this, TMgr);
-		// Initializing the sending object
-		mConnector = new Connector(this, getResources().getString(R.string.connector_url));
 		// Initializing the location listener
 		mLocation = null;
 		LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);

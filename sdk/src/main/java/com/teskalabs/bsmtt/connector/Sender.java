@@ -7,6 +7,8 @@ import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import com.teskalabs.seacat.android.client.SeaCatClient;
+
 /**
  * Sends data to a server.
  * @author Premysl Cerny
@@ -55,7 +57,8 @@ public class Sender extends AsyncTask<JSONObject, String, Boolean> {
 		try {
 			// Preparing the connection
 			URL url = new URL(mConnector.getUrl());
-			HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+			// HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+			HttpURLConnection conn = SeaCatClient.open(url);
 			conn.setRequestMethod("POST");
 			conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
 			conn.setRequestProperty("Accept","application/json");
