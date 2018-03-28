@@ -15,9 +15,16 @@ import android.os.Messenger;
 import android.support.annotation.RequiresPermission;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import org.json.JSONObject;
+import java.util.ArrayList;
 
 import com.teskalabs.bsmtt.cell.CellData;
 import com.teskalabs.bsmtt.connector.Connector;
+import com.teskalabs.bsmtt.events.BasicEvent;
+import com.teskalabs.bsmtt.events.CellEvent;
+import com.teskalabs.bsmtt.events.ConnectionEvent;
+import com.teskalabs.bsmtt.events.JsonEvent;
+import com.teskalabs.bsmtt.events.PhoneEvent;
 import com.teskalabs.bsmtt.location.LocationHelper;
 import com.teskalabs.bsmtt.messaging.BSMTTClientHandler;
 import com.teskalabs.bsmtt.messaging.BSMTTListener;
@@ -29,9 +36,6 @@ import com.teskalabs.bsmtt.phonestate.PhoneListener;
 import com.teskalabs.bsmtt.phonestate.PhoneListenerCallback;
 import com.teskalabs.bsmtt.phonestate.PhoneResponse;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 /**
  * This class gets information about the phone and its behavior and sends them to the server when necessary.
  * @author Stepan Hruska, Premysl Cerny
@@ -39,35 +43,25 @@ import org.json.JSONObject;
 public class BSMTTelemetryService extends Service implements PhoneListenerCallback, LocationListener {
 	public static final String LOG_TAG = "BSMTTelemetryService";
 
-	public TelephonyManager TMgr;
-	public Connector mConnector;
+	// Event constants
+	public static final int BASIC_EVENT_INDEX = 0;
+	public static final int CONNECTION_EVENT_INDEX = 1;
+	public static final int PHONE_EVENT_INDEX = 2;
+	public static final int CELL_EVENT_INDEX = 3;
 
-	// Information related to the phone itself
-	// Basic (dimensions)
-	private String mVendorModel;
-	private String PhoneTypeStr;
-	private String MCC_MNC;
-	private String net_name;
-	private String IMSI;
-	private String IMEI;
-	private String MSISDN; // added by Premysl
-	private String iccid;
-	private Long timestamp;
-	private Location mLocation;
-	// Advanced
-	private boolean haveMobileConnection;
-	private int dconn;
-	// private int dataNetStr;
-	private int mRoaming; // added by Premysl
-	// Information related to the cell
-	private CellData m_cellData; // added by Premysl
-	// Information related to the phone response
-	private PhoneResponse m_phoneResponse; // added by Premysl
+	// Telephony manager
+	private TelephonyManager TMgr;
+	// Sending data
+	private Connector mConnector;
 	// Listeners
 	private PhoneListener PhoneStateListener;
 	// Connection with activities
 	private IBinder mBinder;
 	private BSMTTServerHandler mMessengerServer;
+	// List of JSON events
+	ArrayList<JsonEvent> mEvents;
+	// The current location
+	private Location mLocation;
 
 	/**
 	 * A basic constructor.
@@ -77,6 +71,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		mMessengerServer = new BSMTTServerHandler();
 		Messenger messenger = new Messenger(mMessengerServer);
 		mBinder = new BSMTTelemetryServiceBinder(messenger);
+		// Events
+		mEvents = new ArrayList<>();
 	}
 
 	/**
@@ -189,35 +185,20 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	@Override
 	public void onPhoneResponseChange(PhoneResponse phoneResponse) {
-		// We can check the differences between the new and the old object
-		if (m_phoneResponse == null ||
-				m_phoneResponse.getCellInfo() != phoneResponse.getCellInfo() ||
-				m_phoneResponse.getCellLocation() != phoneResponse.getCellLocation() ||
-				!m_phoneResponse.getClg().equals(phoneResponse.getClg()) ||
-				m_phoneResponse.getSig_dbm() != phoneResponse.getSig_dbm() ||
-				m_phoneResponse.getSig_ASU() != phoneResponse.getSig_ASU() ||
-				m_phoneResponse.getCallState() != phoneResponse.getCallState() ||
-				m_phoneResponse.getData_networkType() != phoneResponse.getData_networkType() ||
-				m_phoneResponse.getData_state() != phoneResponse.getData_state() ||
-				m_phoneResponse.getDataActivity_dir() != phoneResponse.getDataActivity_dir() ||
-				m_phoneResponse.getRX() != phoneResponse.getRX() ||
-				m_phoneResponse.getTX() != phoneResponse.getTX()) {
-			// Saving the new response
-			try {
-				m_phoneResponse = phoneResponse.clone();
-			} catch (CloneNotSupportedException e) {
-				e.printStackTrace();
-			}
-			// Refreshing variables
-			refreshAllInfo();
-			// Sending data if necessary
-			sendDataIfNeeded();
+		// Related to the phone response
+		if (phoneResponse != null) {
+			long txBytes = TrafficStats.getMobileTxBytes();
+			long rxBytes = TrafficStats.getMobileRxBytes();
+			if (txBytes > 0) phoneResponse.setTX(txBytes);
+			if (rxBytes > 0) phoneResponse.setRX(rxBytes);
+			// Saving the phone response
+			PhoneEvent phoneEvent = (PhoneEvent)mEvents.get(PHONE_EVENT_INDEX);
+			phoneEvent.changePhoneResponse(phoneResponse);
 		}
-//		m_phoneResponse = phoneResponse;
-//		// Refreshing variables
-//		refreshAllInfo();
-//		// Sending data if necessary
-//		sendDataIfNeeded();
+		// Refreshing variables
+		refreshAllInfo();
+		// Sending data if necessary
+		sendDataIfNeeded();
 	}
 
 	/**
@@ -226,7 +207,11 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	private void initialize() {
 		// Initializing necessary variables
 		// dataNetStr = "";
-		m_cellData = new CellData();
+		// Adding events to the list
+		mEvents.add(BASIC_EVENT_INDEX, new BasicEvent());
+		mEvents.add(CONNECTION_EVENT_INDEX, new ConnectionEvent());
+		mEvents.add(PHONE_EVENT_INDEX, new PhoneEvent());
+		mEvents.add(CELL_EVENT_INDEX, new CellEvent());
 		// Getting the objects where we are getting the information from
 		TMgr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
 		PhoneStateListener = new PhoneListener(this, TMgr);
@@ -240,6 +225,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 				locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
 				locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
 				mLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+				JsonEvent.changeLocationAtAll(mEvents, mLocation); // saving
 			} catch (SecurityException e) {
 				e.printStackTrace();
 				Log.e(LOG_TAG, getResources().getString(R.string.location_permissions));
@@ -269,53 +255,52 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	private void retrieveBasicPhoneInformation() {
 		// Phone information
 		try {
-			mVendorModel = BSMTTelemetryHelper.getPhoneVendorModel();
-			PhoneTypeStr = BSMTTelemetryHelper.getPhoneTypeStr(TMgr);
-			IMSI = TMgr.getSubscriberId();
-			IMEI = TMgr.getDeviceId();
-			iccid = TMgr.getSimSerialNumber();
-			MSISDN = TMgr.getLine1Number();
+			JsonEvent.changePhoneInfoAtAll(mEvents,
+					BSMTTelemetryHelper.getPhoneVendorModel(),
+					BSMTTelemetryHelper.getPhoneTypeStr(TMgr),
+					TMgr.getSubscriberId(),
+					TMgr.getDeviceId(),
+					TMgr.getLine1Number(),
+					TMgr.getSimSerialNumber());
 		} catch (SecurityException e) {
 			e.printStackTrace();
 		}
-		// Timestamp
-		timestamp = System.currentTimeMillis();
 	}
 
 	/**
 	 * Refreshes advanced information about the phone and its current state.
 	 */
 	private void refreshAdvancedPhoneInformation() {
-		// Roaming
-		mRoaming = 0;
-		if (TMgr.isNetworkRoaming()) {
-			mRoaming = 1;
-		}
-		if (TMgr.getNetworkType() == TelephonyManager.NETWORK_TYPE_UNKNOWN){
-			mRoaming = -1;
-		}
-
-		// Cell info
-		m_cellData = BSMTTelemetryHelper.getCellLocation(m_cellData, TMgr, PhoneTypeStr);
-		m_cellData = BSMTTelemetryHelper.getCellSignal(m_cellData, TMgr);
+		// Network
+		String MCC_MNC = TMgr.getNetworkOperator();
+		String net_name = TMgr.getNetworkOperatorName();
+		JsonEvent.changePhoneNetworkAtAll(mEvents, MCC_MNC, net_name);
 
 		// Connection
-		haveMobileConnection = BSMTTelemetryHelper.haveMobileConnection(this);
-		// dconn = BSMTTelemetryHelper.getDataState(TMgr);
-		dconn = TMgr.getDataState();
-		MCC_MNC = TMgr.getNetworkOperator();
-		net_name = TMgr.getNetworkOperatorName();
-		// if (m_phoneResponse != null) {
-			// dataNetStr = BSMTTelemetryHelper.getNetworkType(m_phoneResponse.getData_networkType());
-		// }
-
-		// Related to the phone response
-		if (m_phoneResponse != null) {
-			long txBytes = TrafficStats.getMobileTxBytes();
-			long rxBytes = TrafficStats.getMobileRxBytes();
-			if (txBytes > 0) m_phoneResponse.setTX(txBytes);
-			if (rxBytes > 0) m_phoneResponse.setRX(rxBytes);
+		// Roaming
+		int roaming = 0;
+		if (TMgr.isNetworkRoaming()) {
+			roaming = 1;
 		}
+		if (TMgr.getNetworkType() == TelephonyManager.NETWORK_TYPE_UNKNOWN){
+			roaming = -1;
+		}
+		// Other info
+		boolean haveMobileConnection = BSMTTelemetryHelper.haveMobileConnection(this);
+		int dconn = TMgr.getDataState();
+		// if (m_phoneResponse != null) {
+		// dataNetStr = BSMTTelemetryHelper.getNetworkType(m_phoneResponse.getData_networkType());
+		// }
+		// Saving
+		ConnectionEvent connectionEvent = (ConnectionEvent)mEvents.get(CONNECTION_EVENT_INDEX);
+		connectionEvent.changeNetwork(haveMobileConnection, dconn, roaming);
+
+		// Cell info
+		CellEvent cellEvent = (CellEvent)mEvents.get(CELL_EVENT_INDEX);
+		CellData cellData = cellEvent.getCellData();
+		cellData = BSMTTelemetryHelper.getCellLocation(cellData, TMgr, cellEvent.getPhoneTypeStr());
+		cellData = BSMTTelemetryHelper.getCellSignal(cellData, TMgr);
+		cellEvent.changeCell(cellData);
 	}
 
 	/**
@@ -345,6 +330,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 				return;
 			}
 		}
+		// Saving the location
+		JsonEvent.changeLocationAtAll(mEvents, mLocation);
 		// Refreshing variables
 		refreshAllInfo();
 		// Sending data if necessary
@@ -377,15 +364,24 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	private void sendDataIfNeeded() {
 		// Checking before sending
-		// The phone response must not be empty
-		if (m_phoneResponse == null)
-			return;
 		// The location must be precise enough
 		if (!isLocationAccurate())
 			return;
-		// Getting the data
-		JSONObject JSON = prepareJSONForSending();
+
 		// Sending the data
+		for (int i = 0; i < mEvents.size(); i++) {
+			JsonEvent event = mEvents.get(i);
+			if (event.isReady()) {
+				sendJSON(event.receiveEvent());
+			}
+		}
+	}
+
+	/**
+	 * Sends JSON to all connectors.
+	 * @param JSON JSONObject
+	 */
+	private void sendJSON(JSONObject JSON) {
 		if (JSON != null) {
 			// Adding the data to the sender
 			mConnector.send(JSON);
@@ -393,105 +389,6 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 			mMessengerServer.sendMessage(BSMTTMessage.MSG_JSON_EVENT, JSON);
 			// Printing the data
 			Log.i(LOG_TAG, JSON.toString());
-		}
-	}
-
-	/**
-	 * Prepares/maps data in the JSON format to be sent.
-	 * @return JSONObject
-	 */
-	private JSONObject prepareJSONForSending() {
-		JSONObject JSON = new JSONObject();
-		try {
-			// From the service's variables
-			// Basic
-			// Gravitational field (or spacetime for losers)
-			JSON.put("@timestamp", timestamp);
-			if (mLocation != null) {
-				JSONObject Lattr = new JSONObject();
-				Lattr.put("lat", mLocation.getLatitude());
-				Lattr.put("lon", mLocation.getLongitude());
-				JSON.put("L", Lattr);
-			}
-			// Phone information
-			JSON.put("vendor_model", mVendorModel);
-			JSON.put("phone_type", PhoneTypeStr);
-			JSON.put("MCC_MNC", MCC_MNC);
-			JSON.put("net_name", net_name);
-			if (IMSI != null)
-				JSON.put("IMSI", IMSI);
-			if (IMEI != null)
-				JSON.put("IMEI", IMEI);
-			if (MSISDN != null && !MSISDN.equals(""))
-				JSON.put("MSISDN", MSISDN);
-			if (iccid != null)
-				JSON.put("iccid", iccid);
-
-			// Advanced
-			JSON.put("have_mobile_conn", haveMobileConnection);
-			JSON.put("dconn", dconn);
-			// if (!dataNetStr.equals(""))
-			//	JSON.put("data_net", dataNetStr);
-			JSON.put("roaming", mRoaming);
-			// From the cell
-			if (m_cellData.getASU() != Integer.MIN_VALUE)
-				JSON.put("ASU", m_cellData.getASU());
-			if (m_cellData.getBSID() != Integer.MIN_VALUE)
-				JSON.put("BSID", m_cellData.getBSID());
-			if (m_cellData.getBSILat() != Integer.MIN_VALUE)
-				JSON.put("BSILat", m_cellData.getBSILat());
-			if (m_cellData.getBSILon() != Integer.MIN_VALUE)
-				JSON.put("BSILon", m_cellData.getBSILon());
-			if (m_cellData.getCi() != Integer.MIN_VALUE)
-				JSON.put("ci", m_cellData.getCi());
-			if (m_cellData.getCid() != Integer.MIN_VALUE)
-				JSON.put("cid", m_cellData.getCid());
-			if (m_cellData.getDbm() != Integer.MIN_VALUE)
-				JSON.put("dbm", m_cellData.getDbm());
-			if (m_cellData.getEnb() != Integer.MIN_VALUE)
-				JSON.put("enb", m_cellData.getEnb());
-			if (m_cellData.getLac() != Integer.MIN_VALUE)
-				JSON.put("lac", m_cellData.getLac());
-			if (m_cellData.getNetID() != Integer.MIN_VALUE)
-				JSON.put("NetID", m_cellData.getNetID());
-			if (m_cellData.getPci() != Integer.MIN_VALUE)
-				JSON.put("pci", m_cellData.getPci());
-			if (m_cellData.getPsc() != Integer.MIN_VALUE)
-				JSON.put("psc", m_cellData.getPsc());
-			if (m_cellData.getRnc() != Integer.MIN_VALUE)
-				JSON.put("rnc", m_cellData.getRnc());
-			if (m_cellData.getSysID() != Integer.MIN_VALUE)
-				JSON.put("SysID", m_cellData.getSysID());
-			if (m_cellData.getTac() != Integer.MIN_VALUE)
-				JSON.put("tac", m_cellData.getTac());
-			if (m_cellData.getTimAdv() != Integer.MIN_VALUE)
-				JSON.put("TimAdv", m_cellData.getTimAdv());
-			// From the phone response
-			if (m_phoneResponse != null) {
-				if (m_phoneResponse.getData_state() != Integer.MIN_VALUE)
-					JSON.put("data_state", m_phoneResponse.getData_state());
-				if (m_phoneResponse.getData_networkType() != Integer.MIN_VALUE)
-					JSON.put("data_network_type", m_phoneResponse.getData_networkType());
-				if (m_phoneResponse.getSig_ASU() != Integer.MIN_VALUE)
-					JSON.put("sig_ASU", m_phoneResponse.getSig_ASU());
-				if (m_phoneResponse.getSig_dbm() != Integer.MIN_VALUE)
-					JSON.put("sig_dbm", m_phoneResponse.getSig_dbm());
-				if (m_phoneResponse.getDataActivity_dir() != Integer.MIN_VALUE)
-					JSON.put("data_activity_dir", m_phoneResponse.getDataActivity_dir());
-				if (m_phoneResponse.getCallState() != Integer.MIN_VALUE)
-					JSON.put("call_state", m_phoneResponse.getCallState());
-				if (m_phoneResponse.getRX() != Long.MIN_VALUE)
-					JSON.put("RX", m_phoneResponse.getRX());
-				if (m_phoneResponse.getTX() != Long.MIN_VALUE)
-					JSON.put("TX", m_phoneResponse.getTX());
-				if (!m_phoneResponse.getClg().equals(""))
-					JSON.put("Clg", m_phoneResponse.getClg());
-			}
-			// return
-			return JSON;
-		} catch (JSONException e) {
-			e.printStackTrace();
-			return null;
 		}
 	}
 }
