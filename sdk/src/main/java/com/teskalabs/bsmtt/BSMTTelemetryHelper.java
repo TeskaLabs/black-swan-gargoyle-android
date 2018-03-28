@@ -338,9 +338,9 @@ public class BSMTTelemetryHelper {
 	 * Checks if it is allowed to use the access location.
 	 * @return boolean
 	 */
-	public static boolean isCoarseLocationPermissionGranted(Context c) {
+	public static boolean isFineLocationPermissionGranted(Context c) {
 		if (Build.VERSION.SDK_INT >= 23) {
-			if (c.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+			if (c.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
 					== PackageManager.PERMISSION_GRANTED) {
 				return true;
 			} else {

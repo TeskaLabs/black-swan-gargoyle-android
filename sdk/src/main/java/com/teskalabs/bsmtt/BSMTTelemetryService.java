@@ -68,7 +68,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	public BSMTTelemetryService() {
 		// Messaging
-		mMessengerServer = new BSMTTServerHandler();
+		mMessengerServer = new BSMTTServerHandler(this);
 		Messenger messenger = new Messenger(mMessengerServer);
 		mBinder = new BSMTTelemetryServiceBinder(messenger);
 		// Events
@@ -157,11 +157,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent != null) {
-			if (BSMTTelemetryHelper.isCoarseLocationPermissionGranted(this)
-					&& BSMTTelemetryHelper.isPhoneStatePermissionGranted(this)) {
-				initialize(); // start
-				sendDataIfNeeded();
-			} else {
+			if (!BSMTTelemetryHelper.isFineLocationPermissionGranted(this)
+					|| !BSMTTelemetryHelper.isPhoneStatePermissionGranted(this)) {
 				Log.e(LOG_TAG, getResources().getString(R.string.log_permissions));
 				stopSelf();
 			}
@@ -204,7 +201,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	/**
 	 * Initializes the service's objects and loads data about the phone.
 	 */
-	private void initialize() {
+	public void initialize() {
 		// Initializing necessary variables
 		// dataNetStr = "";
 		// Adding events to the list

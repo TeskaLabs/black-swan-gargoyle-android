@@ -4,6 +4,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+
+import com.teskalabs.bsmtt.BSMTTelemetryService;
+
 import java.util.ArrayList;
 
 /**
@@ -12,12 +15,16 @@ import java.util.ArrayList;
  */
 public class BSMTTServerHandler extends Handler {
 	private ArrayList<Messenger> clients;
+	private BSMTTelemetryService mService;
+	private boolean wasInitialized;
 
 	/**
 	 * A basic constructor.
 	 */
-	public BSMTTServerHandler() {
+	public BSMTTServerHandler(BSMTTelemetryService service) {
 		clients = new ArrayList<>();
+		mService = service;
+		wasInitialized = false;
 	}
 
 	/**
@@ -29,6 +36,11 @@ public class BSMTTServerHandler extends Handler {
 		switch (msg.what) {
 			case BSMTTMessage.MSG_ADD_ACTIVITY:
 				clients.add(msg.replyTo);
+				// Initializing the service
+				if (!wasInitialized) {
+					mService.initialize();
+					wasInitialized = true;
+				}
 				break;
 			default:
 				super.handleMessage(msg);
