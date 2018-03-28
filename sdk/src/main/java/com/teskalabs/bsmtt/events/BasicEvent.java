@@ -21,7 +21,8 @@ public class BasicEvent extends JsonEvent {
 		if (ismDimensionsChanged()) {
 			setmDimensionsChanged(false);
 			forceReady();
+			return true;
 		}
-		return super.isReady();
+		return false;
 	}
 }

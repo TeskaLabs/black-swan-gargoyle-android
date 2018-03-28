@@ -4,6 +4,7 @@
     <!-- Gathering the information -->
     <string name="btn_start">Start sending</string>
     <string name="btn_stop">Stop sending</string>
+    <string name="btn_log">Clear log</string>
 
     <!-- View pager -->
     <string name="fragment_info">Info</string>

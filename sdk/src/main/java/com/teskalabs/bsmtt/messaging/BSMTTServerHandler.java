@@ -7,6 +7,9 @@ import android.os.RemoteException;
 
 import com.teskalabs.bsmtt.BSMTTelemetryService;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 /**
@@ -45,6 +48,27 @@ public class BSMTTServerHandler extends Handler {
 			default:
 				super.handleMessage(msg);
 				break;
+		}
+	}
+
+	/**
+	 * A method to send JSON.
+	 * @param JSON JSONObject
+	 */
+	public void sendJSON(JSONObject JSON) {
+		for (int i = 0; i < clients.size(); i++) {
+			try {
+				try {
+					JSONObject sendingJSON = new JSONObject(JSON.toString());
+					clients.get(i).send(Message.obtain(null, BSMTTMessage.MSG_JSON_EVENT, sendingJSON));
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			} catch (RemoteException e) {
+				e.printStackTrace();
+				// The client is not available anymore
+				clients.remove(i);
+			}
 		}
 	}
 

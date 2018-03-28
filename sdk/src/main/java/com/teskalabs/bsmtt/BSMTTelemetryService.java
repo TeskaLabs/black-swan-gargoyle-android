@@ -15,6 +15,8 @@ import android.os.Messenger;
 import android.support.annotation.RequiresPermission;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 
@@ -380,12 +382,17 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	private void sendJSON(JSONObject JSON) {
 		if (JSON != null) {
-			// Adding the data to the sender
-			mConnector.send(JSON);
-			// Passing the data to activities
-			mMessengerServer.sendMessage(BSMTTMessage.MSG_JSON_EVENT, JSON);
-			// Printing the data
-			Log.i(LOG_TAG, JSON.toString());
+			try {
+				JSONObject sendingJSON = new JSONObject(JSON.toString());
+				// Adding the data to the sender
+				mConnector.send(sendingJSON);
+				// Passing the data to activities
+				mMessengerServer.sendJSON(sendingJSON);
+				// Printing the data
+				Log.i(LOG_TAG, sendingJSON.toString());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

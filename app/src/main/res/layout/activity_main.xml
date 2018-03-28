@@ -11,20 +11,42 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <Button
-            android:layout_marginTop="@dimen/small_padding"
-            android:layout_marginLeft="@dimen/main_padding"
-            android:layout_marginRight="@dimen/main_padding"
-            android:id="@+id/sendButton"
-            android:onClick="onButtonClick"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="25dp"
-            android:text="@string/btn_start" />
+        <LinearLayout
+            android:id="@+id/buttonLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:layout_marginTop="@dimen/small_padding"
+                android:layout_marginStart="@dimen/main_padding"
+                android:layout_marginEnd="@dimen/small_padding"
+                android:id="@+id/sendButton"
+                android:onClick="onButtonClick"
+                android:layout_width="0dp"
+                android:layout_weight="0.5"
+                android:layout_height="wrap_content"
+                android:padding="25dp"
+                android:backgroundTint="@color/colorAccent"
+                android:text="@string/btn_start" />
+
+            <Button
+                android:id="@+id/logButton"
+                android:onClick="clearLog"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/main_padding"
+                android:layout_marginStart="@dimen/small_padding"
+                android:layout_marginTop="@dimen/small_padding"
+                android:layout_weight="0.5"
+                android:padding="25dp"
+                android:backgroundTint="@color/colorAccent"
+                android:text="@string/btn_log"/>
+
+        </LinearLayout>
 
         <android.support.design.widget.TabLayout
             android:layout_marginTop="@dimen/small_padding"
-            android:layout_below="@id/sendButton"
+            android:layout_below="@id/buttonLayout"
             android:id="@+id/tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -14,14 +14,18 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.Spanned;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
 import com.teskalabs.bsmtt.BSMTTelemetryService;
+import com.teskalabs.bsmtt.events.BSMTTEvents;
 import com.teskalabs.bsmtt.messaging.BSMTTListener;
 import com.teskalabs.bsmtt.messaging.BSMTTMessage;
 import com.teskalabs.bsmtt.messaging.BSMTTServiceConnection;
+import com.teskalabs.bsmttapp.fragments.FragmentInfo;
 import com.teskalabs.bsmttapp.fragments.FragmentLog;
 import com.teskalabs.bsmttapp.fragments.ViewPagerAdapter;
 
@@ -64,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 		ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
 
 		// Add Fragments to adapter one by one
+		adapter.addFragment(new FragmentInfo(), getResources().getString(R.string.fragment_info));
 		adapter.addFragment(new FragmentLog(), getResources().getString(R.string.fragment_log));
 		viewPager.setAdapter(adapter);
 
@@ -104,6 +109,15 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	}
 
 	/**
+	 * Cleans the log panel.
+	 * @param view View
+	 */
+	public void clearLog(View view) {
+		TextView logView = findViewById(R.id.logView);
+		logView.setText("");
+	}
+
+	/**
 	 * Reacts to messages sent by the service.
 	 * @param msg Message
 	 * @return boolean
@@ -124,10 +138,70 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	 * @param JSON JSONObject
 	 */
 	private void showDataFromJSON(JSONObject JSON) {
+		try {
+			if (JSON.has("event_type")) {
+				if (JSON.getInt("event_type") == BSMTTEvents.BASIC_EVENT) {
+					JSON.put("event_type", null); // no need of this info
+					JSON.put("@timestamp", null); // no need of this info
+					showDataInInfo(JSON);
+				} else {
+					// Removing unnecessary data
+					JSON.put("vendor_model", null);
+					JSON.put("phone_type", null);
+					JSON.put("IMSI", null);
+					JSON.put("IMEI", null);
+					JSON.put("MSISDN", null);
+					JSON.put("iccid", null);
+					JSON.put("MCC_MNC", null);
+					JSON.put("net_name", null);
+					// Showing
+					showDataInLog(JSON);
+				}
+			}
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Shows an event's data in the info panel.
+	 * @param JSON JSONObject
+	 */
+	private void showDataInInfo(JSONObject JSON) {
+		// Getting the view
+		TextView infoView = findViewById(R.id.infoView);
+		// Preparing variables
+		StringBuilder onlyText = new StringBuilder();
+		// Iterating through the JSON
+		Iterator<String> iterator = JSON.keys();
+		while (iterator.hasNext()) {
+			String key = iterator.next();
+			try {
+				Object value = JSON.get(key);
+				onlyText.append("<b>");
+				onlyText.append(key);
+				onlyText.append("</b>");
+				onlyText.append(": ");
+				onlyText.append(value.toString());
+				if (iterator.hasNext())
+					onlyText.append("<br />");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		// Showing the text to the user
+		infoView.setText(Html.fromHtml(onlyText.toString()));
+	}
+
+	/**
+	 * Shows an event's data in the log panel.
+	 * @param JSON JSONObject
+	 */
+	private void showDataInLog(JSONObject JSON) {
 		// Getting the view
 		TextView logView = findViewById(R.id.logView);
 		// Preparing variables
-		String oldText = logView.getText().toString();
+		String oldText = Html.toHtml((Spanned)logView.getText());
 		StringBuilder newText = new StringBuilder();
 		// Iterating through the JSON
 		Iterator<String> iterator = JSON.keys();
@@ -135,23 +209,25 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 			String key = iterator.next();
 			try {
 				Object value = JSON.get(key);
+				newText.append("<b>");
 				newText.append(key);
+				newText.append("</b>");
 				newText.append(": ");
 				newText.append(value.toString());
 				if (wasFirstJSON || iterator.hasNext())
-					newText.append("\n");
+					newText.append("<br />");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 		}
 		// Appending the old text
-		if (!oldText.equals("")) {
-			newText.append("\n");
+		if (!oldText.equals("") && oldText.length() > 1) {
+			newText.append("<br />");
 			newText.append(oldText);
 		}
 		// Showing the text to the user
 		wasFirstJSON = true;
-		logView.setText(newText);
+		logView.setText(Html.fromHtml(newText.toString()));
 	}
 
 	// GPS location --------------------------------------------------------------------------------
