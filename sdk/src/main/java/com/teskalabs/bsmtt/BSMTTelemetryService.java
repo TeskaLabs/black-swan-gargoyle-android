@@ -34,7 +34,6 @@ import com.teskalabs.bsmtt.messaging.BSMTTClientHandler;
 import com.teskalabs.bsmtt.messaging.BSMTTListener;
 import com.teskalabs.bsmtt.messaging.BSMTTServerHandler;
 import com.teskalabs.bsmtt.messaging.BSMTTServiceConnection;
-import com.teskalabs.bsmtt.messaging.BSMTTelemetryServiceBinder;
 import com.teskalabs.bsmtt.phonestate.PhoneListener;
 import com.teskalabs.bsmtt.phonestate.PhoneListenerCallback;
 import com.teskalabs.bsmtt.phonestate.PhoneResponse;
@@ -61,7 +60,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	// Listeners
 	private PhoneListener PhoneStateListener;
 	// Connection with activities
-	private IBinder mBinder;
+	private Messenger mMessenger;
 	private BSMTTServerHandler mMessengerServer;
 	// List of JSON events
 	ArrayList<JsonEvent> mEvents;
@@ -74,8 +73,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	public BSMTTelemetryService() {
 		// Messaging
 		mMessengerServer = new BSMTTServerHandler(this);
-		Messenger messenger = new Messenger(mMessengerServer);
-		mBinder = new BSMTTelemetryServiceBinder(messenger);
+		mMessenger = new Messenger(mMessengerServer);
 		// Events
 		mEvents = new ArrayList<>();
 	}
@@ -108,11 +106,21 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
 			Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE})
-	public static BSMTTServiceConnection run(Context context, BSMTTListener listener) {
+	public static void run(Context context) {
 		// Starting the service
 		Intent intent = new Intent(context, BSMTTelemetryService.class);
 		context.startService(intent);
+	}
+
+	/**
+	 * Creates a connection between a service and an activity to communicate through messages.
+	 * @param context Context
+	 * @param listener BSMTTListener
+	 * @return BSMTTServiceConnection
+	 */
+	public static BSMTTServiceConnection startConnection(Context context, BSMTTListener listener) {
 		// Binding the service
+		Intent intent = new Intent(context, BSMTTelemetryService.class);
 		try {
 			Messenger receiveMessenger = new Messenger(new BSMTTClientHandler(listener));
 			BSMTTServiceConnection connection = new BSMTTServiceConnection(receiveMessenger);
@@ -125,14 +133,22 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	}
 
 	/**
-	 * Stops the service.
+	 * Shuts down a connection between an activity and a service.
 	 * @param context Context
+	 * @param connection BSMTTServiceConnection
 	 */
-	public static void stop(Context context, BSMTTServiceConnection connection) {
-		Intent intent = new Intent(context, BSMTTelemetryService.class);
+	public static void stopConnection(Context context, BSMTTServiceConnection connection) {
 		// Unbinding
 		if (connection != null)
 			context.unbindService(connection);
+	}
+
+	/**
+	 * Stops the service.
+	 * @param context Context
+	 */
+	public static void stop(Context context) {
+		Intent intent = new Intent(context, BSMTTelemetryService.class);
 		// Stopping
 		context.stopService(intent);
 	}
@@ -157,6 +173,18 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	}
 
 	/**
+	 * Checks and returns the events.
+	 * @return ArrayList<JsonEvent>
+	 */
+	public ArrayList<JsonEvent> getEvents() {
+		// Checking that the events are ready to be read
+		if (mLocation == null)
+			return new ArrayList<>();
+		// Returning the events
+		return mEvents;
+	}
+
+	/**
 	 * Checks permissions, initializes the service and obtains the data.
 	 * @param intent Intent
 	 * @param flags int
@@ -171,6 +199,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 				Log.e(LOG_TAG, getResources().getString(R.string.log_permissions));
 				stopSelf();
 			} else {
+				SeaCatClient.initialize(this);
 				// Initializing the sending object
 				mConnector = new Connector(this, getResources().getString(R.string.connector_url));
 				// Registering the SeaCat receiver
@@ -199,6 +228,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 					}
 				};
 				registerReceiver(mSeaCatReceiver, intentFilter);
+				initialize(); // initialize
 			}
 		}
 		return Service.START_NOT_STICKY;
@@ -220,7 +250,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	@Override
 	public IBinder onBind(Intent intent) {
-		return mBinder;
+		return mMessenger.getBinder();
 	}
 
 	/**
@@ -394,11 +424,10 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	private void sendDataIfNeeded() {
 		// Checking before sending
-		if (mLocation == null)
-			return;
+		ArrayList<JsonEvent> events = getEvents();
 		// Sending the data
-		for (int i = 0; i < mEvents.size(); i++) {
-			JsonEvent event = mEvents.get(i);
+		for (int i = 0; i < events.size(); i++) {
+			JsonEvent event = events.get(i);
 			if (event.isReady()) {
 				sendJSON(event.receiveEvent());
 			}

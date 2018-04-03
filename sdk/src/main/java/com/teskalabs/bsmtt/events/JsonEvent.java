@@ -99,6 +99,21 @@ public abstract class JsonEvent {
 	}
 
 	/**
+	 * Gets the event's data directly.
+	 * @return JSONObject
+	 */
+	public JSONObject simpleGet() {
+		// Refreshes the timestamp
+		try {
+			mJSONEvent.put("@timestamp", System.currentTimeMillis());
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		// Return
+		return mJSONEvent;
+	}
+
+	/**
 	 * The event is received by the listener, if it is ready.
 	 * @return JSONObject
 	 */

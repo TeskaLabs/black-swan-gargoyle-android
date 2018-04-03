@@ -31,7 +31,6 @@ import com.teskalabs.bsmttapp.fragments.ViewPagerAdapter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.Iterator;
 
 /**
@@ -60,8 +59,11 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 
 		// Preparing the button text
 		Button btn = findViewById(R.id.sendButton);
-		if (BSMTTelemetryService.isRunning(this))
+		if (BSMTTelemetryService.isRunning(this)) {
 			btn.setText(getResources().getString(R.string.btn_stop));
+			// Register the connection
+			mConnection = BSMTTelemetryService.startConnection(this, this);
+		}
 
 		// View pager
 		ViewPager viewPager = findViewById(R.id.pager);
@@ -92,13 +94,17 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 			Button btn = findViewById(R.id.sendButton);
 			if (BSMTTelemetryService.isRunning(MainActivity.this)) {
 				// Stopping the service
-				BSMTTelemetryService.stop(MainActivity.this, mConnection);
+				if (mConnection != null) {
+					BSMTTelemetryService.stopConnection(this, mConnection);
+				}
+				BSMTTelemetryService.stop(MainActivity.this);
 				// Button text
 				btn.setText(getResources().getString(R.string.btn_start));
 			} else {
 				// Starting the service
 				try {
-					mConnection = BSMTTelemetryService.run(MainActivity.this, this);
+					BSMTTelemetryService.run(MainActivity.this);
+					mConnection = BSMTTelemetryService.startConnection(this, this);
 					// Button text
 					btn.setText(getResources().getString(R.string.btn_stop));
 				} catch (SecurityException e) {
@@ -124,11 +130,17 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	 */
 	@Override
 	public boolean onReceiveMessage(Message msg) {
-		// Processing the JSON event
-		if (msg.what == BSMTTMessage.MSG_JSON_EVENT) {
-			JSONObject JSON = (JSONObject)msg.obj;
-			showDataFromJSON(JSON);
-			return true;
+		// Processing the event
+		switch (msg.what) {
+			case BSMTTMessage.MSG_JSON_EVENT:
+				JSONObject JSON = (JSONObject)msg.obj;
+				showDataFromJSON(JSON);
+				return true;
+			case BSMTTMessage.MSG_CONNECTED:
+				if (mConnection != null) {
+					mConnection.requestCurrentData();
+				}
+				return true;
 		}
 		return false;
 	}

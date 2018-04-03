@@ -13,6 +13,7 @@ import android.os.RemoteException;
  */
 public class BSMTTServiceConnection implements ServiceConnection {
 	private Messenger mReceiveMessenger;
+	private Messenger mServiceMessenger;
 
 	/**
 	 * A basic constructor.
@@ -20,21 +21,42 @@ public class BSMTTServiceConnection implements ServiceConnection {
 	 */
 	public BSMTTServiceConnection(Messenger receiveMessenger) {
 		mReceiveMessenger = receiveMessenger;
+		mServiceMessenger = null;
+	}
+
+	/**
+	 * Requests current data (events).
+	 * @return boolean
+	 */
+	public boolean requestCurrentData() {
+		if (mServiceMessenger == null)
+			return false;
+		try {
+			Message msg = Message.obtain(null, BSMTTMessage.MSG_GET_EVENT_LIST);
+			msg.replyTo = mReceiveMessenger;
+			mServiceMessenger.send(msg);
+			return true;
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	/**
 	 * Notifies the service to register a listener (activity) to send messages to.
 	 * @param className ComponentName
-	 * @param binder IBinder
+	 * @param service IBinder
 	 */
 	@Override
-	public void onServiceConnected(ComponentName className, IBinder binder) {
-		BSMTTelemetryServiceBinder bsmttBinder = (BSMTTelemetryServiceBinder)binder;
-		Messenger messenger = bsmttBinder.getMessenger();
+	public void onServiceConnected(ComponentName className, IBinder service) {
 		try {
+			// Notify the service
+			mServiceMessenger = new Messenger(service);
 			Message msg = Message.obtain(null, BSMTTMessage.MSG_ADD_ACTIVITY);
 			msg.replyTo = mReceiveMessenger;
-			messenger.send(msg);
+			mServiceMessenger.send(msg);
+			// Notify the app
+			mReceiveMessenger.send(Message.obtain(null, BSMTTMessage.MSG_CONNECTED));
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
