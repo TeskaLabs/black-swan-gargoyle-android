@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="connector_url">https://evalhost.seacat/</string>
-    <integer name="location_precision_meters">100</integer>
 </resources>

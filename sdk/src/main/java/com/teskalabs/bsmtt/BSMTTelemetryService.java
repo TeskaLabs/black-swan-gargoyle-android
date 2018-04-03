@@ -346,18 +346,6 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	}
 
 	/**
-	 * Checks if the current location is accurate enough.
-	 * @return boolean
-	 */
-	private boolean isLocationAccurate() {
-		// Checking the null value
-		if (mLocation == null)
-			return false;
-		// Getting and checking the accuracy
-		return (mLocation.getAccuracy() <= getResources().getInteger(R.integer.location_precision_meters));
-	}
-
-	/**
 	 * Receives a new location update.
 	 * @param location Location
 	 */
@@ -406,10 +394,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	private void sendDataIfNeeded() {
 		// Checking before sending
-		// The location must be precise enough
-		if (!isLocationAccurate())
+		if (mLocation == null)
 			return;
-
 		// Sending the data
 		for (int i = 0; i < mEvents.size(); i++) {
 			JsonEvent event = mEvents.get(i);
@@ -431,8 +417,6 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 				mConnector.send(sendingJSON);
 				// Passing the data to activities
 				mMessengerServer.sendJSON(sendingJSON);
-				// Printing the data
-				Log.i(LOG_TAG, sendingJSON.toString());
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
