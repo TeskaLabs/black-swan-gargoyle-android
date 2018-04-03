@@ -193,6 +193,7 @@ public abstract class JsonEvent {
 				JSONObject Lattr = new JSONObject();
 				Lattr.put("lat", mLocation.getLatitude());
 				Lattr.put("lon", mLocation.getLongitude());
+				Lattr.put("lp", mLocation.getAccuracy());
 				mJSONEvent.put("L", Lattr);
 				mDimensionsChanged = true; // notify
 			}

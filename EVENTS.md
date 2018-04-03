@@ -14,7 +14,7 @@ All events hold the following information:
 
 **@timestamp** *long*
 
-**L**: { "lat": *double*, "lon": *double* }
+**L**: { "lat": *double*, "lon": *double*, "lp": *double* }
 
 **event_type** *int* (see headers below)
 
