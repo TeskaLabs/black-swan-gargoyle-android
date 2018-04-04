@@ -38,7 +38,7 @@ public class ConnectionEvent extends JsonEvent {
 		mRoaming = roaming;
 		JSONObject data = getEventData();
 		try {
-			data.put("have_mobile_conn", haveMobileConnection);
+			data.put("have_mobile_conn", haveMobileConnection ? 1 : 0);
 			data.put("dconn", dconn);
 			data.put("roaming", mRoaming);
 			saveEventData(data); // save

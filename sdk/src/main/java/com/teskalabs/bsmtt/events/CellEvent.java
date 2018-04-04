@@ -92,7 +92,7 @@ public class CellEvent extends JsonEvent {
 				if (m_cellData.getSysID() != Integer.MIN_VALUE)
 					data.put("SysID", m_cellData.getSysID());
 				if (m_cellData.getTac() != Integer.MIN_VALUE)
-					data.put("tac", m_cellData.getTac());
+					data.put("TAC", m_cellData.getTac());
 				if (m_cellData.getTimAdv() != Integer.MIN_VALUE)
 					data.put("TimAdv", m_cellData.getTimAdv());
 				saveEventData(data); // save

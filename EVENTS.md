@@ -14,7 +14,9 @@ All events hold the following information:
 
 **@timestamp** *long*
 
-**L**: { "lat": *double*, "lon": *double*, "lp": *double* }
+**L**: { "lat": *double*, "lon": *double*}
+
+**Lp**: *double* 
 
 **event_type** *int* (see headers below)
 
@@ -38,7 +40,7 @@ This event contains no additional information and is sent when some of the basic
 
 This event contains additional information related to the internet connection, especially related to the fact whether the user is using the phone data connection.
 
-**have_mobile_conn** *boolean*
+**have_mobile_conn** *int*
 
 **dconn** *int*
 
@@ -98,7 +100,7 @@ This event contains information about the cell identity and location. Only a few
 
 **SysID** *int*
 
-**tac** *int*
+**TAC** *int*
 
 **TimAdv** *int*
 
