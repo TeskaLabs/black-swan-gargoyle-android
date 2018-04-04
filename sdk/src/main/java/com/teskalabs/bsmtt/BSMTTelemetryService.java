@@ -122,7 +122,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		// Binding the service
 		Intent intent = new Intent(context, BSMTTelemetryService.class);
 		try {
-			Messenger receiveMessenger = new Messenger(new BSMTTClientHandler(listener));
+			Messenger receiveMessenger = new Messenger(new BSMTTClientHandler(context, listener));
 			BSMTTServiceConnection connection = new BSMTTServiceConnection(receiveMessenger);
 			context.bindService(intent, connection, Context.BIND_AUTO_CREATE);
 			return connection;
@@ -295,8 +295,13 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		if (locationManager != null) {
 			try {
 				locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
-				locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-				mLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+				mLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+				if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+					locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+					Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+					if (location != null)
+						mLocation = location;
+				}
 				JsonEvent.changeLocationAtAll(mEvents, mLocation); // saving
 			} catch (SecurityException e) {
 				e.printStackTrace();

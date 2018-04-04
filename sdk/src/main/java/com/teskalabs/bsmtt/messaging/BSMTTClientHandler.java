@@ -1,5 +1,6 @@
 package com.teskalabs.bsmtt.messaging;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -12,12 +13,14 @@ import org.json.JSONObject;
  */
 public class BSMTTClientHandler extends Handler {
 	private BSMTTListener mListener;
+	private Context mContext;
 
 	/**
 	 * A simple constructor.
 	 * @param listener BSMTTListener
 	 */
-	public BSMTTClientHandler(BSMTTListener listener) {
+	public BSMTTClientHandler(Context context, BSMTTListener listener) {
+		mContext = context;
 		mListener = listener;
 	}
 
@@ -27,6 +30,11 @@ public class BSMTTClientHandler extends Handler {
 	 */
 	@Override
 	public void handleMessage(Message msg) {
+		// Checking that the message is from the same package
+		String callingApp = mContext.getPackageManager().getNameForUid(msg.sendingUid);
+		String myApp = mContext.getApplicationContext().getPackageName();
+		if (callingApp == null || !callingApp.equals(myApp))
+			return;
 		// Handling special cases (JSON)
 		Bundle data = msg.getData();
 		switch (msg.what) {

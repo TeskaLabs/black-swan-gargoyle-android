@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+
 import org.json.JSONObject;
 import java.util.ArrayList;
 
@@ -34,6 +35,12 @@ public class BSMTTServerHandler extends Handler {
 	 */
 	@Override
 	public void handleMessage(Message msg) {
+		// Checking that the message is from the same package
+		String callingApp = mService.getPackageManager().getNameForUid(msg.sendingUid);
+		String myApp = mService.getApplicationContext().getPackageName();
+		if (callingApp == null || !callingApp.equals(myApp))
+			return;
+		// Handling the message
 		switch (msg.what) {
 			case BSMTTMessage.MSG_ADD_ACTIVITY:
 				clients.add(msg.replyTo);
