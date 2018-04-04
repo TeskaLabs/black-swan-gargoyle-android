@@ -40,6 +40,7 @@ import java.util.Iterator;
 public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	// GPS
 	public static int GPS_SETTINS_INTENT = 200;
+	private boolean mOnlyWifiLoc;
 	// Permissions
 	public static int ACCESS_FINE_LOCATION_PERMISSION = 300;
 	public static int READ_PHONE_STATE_PERMISSION = 301;
@@ -56,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 		// Default values
 		mConnection = null;
 		wasFirstJSON = false;
+		mOnlyWifiLoc = false;
 
 		// Preparing the button text
 		Button btn = findViewById(R.id.sendButton);
@@ -252,7 +254,12 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	 */
 	private boolean checkGPSEnabled() {
 		LocationManager locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
-		return (locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER));
+		if (mOnlyWifiLoc) {
+			return (locationManager != null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
+		} else {
+			return (locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+					&& locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
+		}
 	}
 
 	/**
@@ -263,16 +270,27 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 		alertDialogBuilder.setTitle(getResources().getString(R.string.app_name));
 		alertDialogBuilder.setMessage(getResources().getString(R.string.gps_not_allowed))
 				.setCancelable(false)
-				.setPositiveButton(getResources().getString(R.string.gps_enable_ok),
+				.setPositiveButton(getResources().getString(R.string.gps_enable_gps),
 						new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int i) {
+								mOnlyWifiLoc = false;
 								Intent callGPSSettingIntent = new Intent(
 										android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
 								startActivityForResult(callGPSSettingIntent, GPS_SETTINS_INTENT);
 								dialogInterface.cancel();
 							}
-						});
+						})
+				.setNeutralButton(getResources().getString(R.string.gps_enable_wifi), new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialogInterface, int i) {
+						mOnlyWifiLoc = true;
+						Intent callGPSSettingIntent = new Intent(
+								android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+						startActivityForResult(callGPSSettingIntent, GPS_SETTINS_INTENT);
+						dialogInterface.cancel();
+					}
+				});
 		AlertDialog alert = alertDialogBuilder.create();
 		alert.show();
 	}
