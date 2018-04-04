@@ -14,6 +14,7 @@ import java.util.ArrayList;
 public abstract class JsonEvent {
 	private boolean mReady;
 	private boolean mDimensionsChanged;
+	private boolean mLocationChanged;
 	private JSONObject mJSONEvent;
 
 	// Temporary variables
@@ -76,12 +77,14 @@ public abstract class JsonEvent {
 	protected JsonEvent(int type) {
 		mReady = false;
 		mDimensionsChanged = false;
+		mLocationChanged = false;
 		mJSONEvent = new JSONObject();
 		// Dimensions first
 		try {
 			// Gravitational field (or spacetime for losers)
 			mJSONEvent.put("@timestamp", System.currentTimeMillis());
 			mJSONEvent.put("L", new JSONObject());
+			mJSONEvent.put("Lp", 0.0);
 			mJSONEvent.put("event_type", type);
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -166,6 +169,22 @@ public abstract class JsonEvent {
 	}
 
 	/**
+	 * Returns true if the location changed.
+	 * @return boolean
+	 */
+	public boolean ismLocationChanged() {
+		return mLocationChanged;
+	}
+
+	/**
+	 * Sets the value of the location changed.
+	 * @param mLocationChanged boolean
+	 */
+	public void setmLocationChanged(boolean mLocationChanged) {
+		this.mLocationChanged = mLocationChanged;
+	}
+
+	/**
 	 * Gets the event data.
 	 * @return JSONObject
 	 */
@@ -208,9 +227,10 @@ public abstract class JsonEvent {
 				JSONObject Lattr = new JSONObject();
 				Lattr.put("lat", mLocation.getLatitude());
 				Lattr.put("lon", mLocation.getLongitude());
-				Lattr.put("lp", mLocation.getAccuracy());
 				mJSONEvent.put("L", Lattr);
+				mJSONEvent.put("Lp", mLocation.getAccuracy());
 				mDimensionsChanged = true; // notify
+				mLocationChanged = true; // notify
 			}
 		} catch (JSONException e) {
 			e.printStackTrace();
