@@ -282,7 +282,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		// Initializing necessary variables
 		// dataNetStr = "";
 		// Adding events to the list
-		mEvents.add(BASIC_EVENT_INDEX, new BasicEvent());
+		mEvents.add(BASIC_EVENT_INDEX, new BasicEvent(this));
 		mEvents.add(CONNECTION_EVENT_INDEX, new ConnectionEvent());
 		mEvents.add(PHONE_EVENT_INDEX, new PhoneEvent());
 		mEvents.add(CELL_EVENT_INDEX, new CellEvent());
@@ -427,7 +427,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	/**
 	 * Checks if it is necessary to send the data, and if so, it performs the sending.
 	 */
-	private void sendDataIfNeeded() {
+	public void sendDataIfNeeded() {
 		// Checking before sending
 		ArrayList<JsonEvent> events = getEvents();
 		// Sending the data

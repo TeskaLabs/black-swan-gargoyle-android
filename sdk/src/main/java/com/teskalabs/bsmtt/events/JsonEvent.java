@@ -229,7 +229,6 @@ public abstract class JsonEvent {
 				Lattr.put("lon", mLocation.getLongitude());
 				mJSONEvent.put("L", Lattr);
 				mJSONEvent.put("Lp", mLocation.getAccuracy());
-				mDimensionsChanged = true; // notify
 				mLocationChanged = true; // notify
 			}
 		} catch (JSONException e) {
