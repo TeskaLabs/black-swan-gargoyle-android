@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.teskalabs.bsmtt">
+          package="com.teskalabs.blackswan.gargoyle">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -14,8 +14,8 @@
     <application>
 
         <service
-            android:name="com.teskalabs.bsmtt.BSMTTelemetryService"
-            android:process=":bsmttelemetry"
+            android:name="com.teskalabs.blackswan.gargoyle.BSMTTelemetryService"
+            android:process=":bsgargoyle"
             android:exported="false">
         </service>
 

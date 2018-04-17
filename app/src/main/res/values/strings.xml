@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Black Swan Terminal</string>
+    <string name="app_name">Black Swan Gargoyle</string>
 
     <!-- Gathering the information -->
     <string name="btn_start">Start sending</string>
