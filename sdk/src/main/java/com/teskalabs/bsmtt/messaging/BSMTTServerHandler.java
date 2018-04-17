@@ -50,6 +50,10 @@ public class BSMTTServerHandler extends Handler {
 				break;
 			case BSMTTMessage.MSG_GET_CLIENT_TAG:
 				sendClientTag(msg.replyTo, mService.getClientTag());
+				break;
+			case BSMTTMessage.MSG_RESET_IDENTITY:
+				mService.resetIdentity();
+				break;
 			default:
 				super.handleMessage(msg);
 				break;

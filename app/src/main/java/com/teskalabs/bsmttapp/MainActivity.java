@@ -16,6 +16,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.Spanned;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -46,12 +49,17 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	public static int READ_PHONE_STATE_PERMISSION = 301;
 	// Connection with the service
 	private BSMTTServiceConnection mConnection;
+	private boolean isConnected;
 	// JSON showing
 	private boolean wasFirstJSON;
 	// Keeping some important data
 	private String clientTag;
-	private JSONObject lastBasicEvent;
+	private String lastBasicEvent;
 
+	/**
+	 * A main function to register basic components.
+	 * @param savedInstanceState Bundle
+	 */
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -61,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 		mConnection = null;
 		wasFirstJSON = false;
 		mOnlyWifiLoc = false;
+		isConnected = false;
 		clientTag = "";
 		lastBasicEvent = null;
 
@@ -87,6 +96,51 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	}
 
 	/**
+	 * Creating the main menu.
+	 * @param menu Menu
+	 * @return boolean
+	 */
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.menu_main, menu);
+		return true;
+	}
+
+	/**
+	 * Preparing the menu, checking if items should be enabled or not.
+	 * @param menu Menu
+	 * @return boolean
+	 */
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		MenuItem item = menu.findItem(R.id.menu_reset_identity);
+		if (isConnected) {
+			item.setEnabled(true);
+		} else {
+			item.setEnabled(false);
+		}
+		return super.onPrepareOptionsMenu(menu);
+	}
+
+	/**
+	 * Calling actions when a menu item was selected.
+	 * @param item MenuItem
+	 * @return boolean
+	 */
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle item selection
+		switch (item.getItemId()) {
+			case R.id.menu_reset_identity:
+				resetIdentity(null);
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
+
+	/**
 	 * Processes the button click and starts/stops the sending service.
 	 * @param view View
 	 */
@@ -101,12 +155,14 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 			Button btn = findViewById(R.id.sendButton);
 			if (BSMTTelemetryService.isRunning(MainActivity.this)) {
 				// Stopping the service
+				isConnected = false;
 				if (mConnection != null) {
 					BSMTTelemetryService.stopConnection(this, mConnection);
 				}
 				BSMTTelemetryService.stop(MainActivity.this);
 				// Button text
 				btn.setText(getResources().getString(R.string.btn_start));
+				invalidateOptionsMenu(); // menu
 			} else {
 				// Starting the service
 				try {
@@ -131,6 +187,16 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	}
 
 	/**
+	 * Resets the connector's identity.
+	 * @param view View
+	 */
+	public void resetIdentity(View view) {
+		if (mConnection != null) {
+			mConnection.requestResetIdentity();
+		}
+	}
+
+	/**
 	 * Reacts to messages sent by the service.
 	 * @param msg Message
 	 * @return boolean (true if the event was processed)
@@ -147,13 +213,19 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 				clientTag = (String)msg.obj;
 				// Refresh in the info log
 				if (lastBasicEvent != null) {
-					showDataFromJSON(lastBasicEvent);
+					try {
+						showDataFromJSON(new JSONObject(lastBasicEvent));
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
 				}
 				return true;
 			case BSMTTMessage.MSG_CONNECTED:
 				if (mConnection != null) {
 					mConnection.requestCurrentData();
 					mConnection.requestClientTag();
+					isConnected = true;
+					invalidateOptionsMenu(); // menu
 				}
 				return true;
 		}
@@ -168,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 		try {
 			if (JSON.has("event_type")) {
 				if (JSON.getInt("event_type") == BSMTTEvents.BASIC_EVENT) {
-					lastBasicEvent = JSON;
+					lastBasicEvent = JSON.toString();
 					JSON.put("event_type", null); // no need of this info
 					JSON.put("@timestamp", null); // no need of this info
 					showDataInInfo(JSON);

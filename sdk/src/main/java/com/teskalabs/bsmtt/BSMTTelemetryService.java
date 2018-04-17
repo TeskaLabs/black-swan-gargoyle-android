@@ -20,6 +20,8 @@ import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 import com.teskalabs.bsmtt.cell.CellData;
@@ -225,13 +227,14 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 						@Override
 						public void onReceive(Context context, Intent intent) {
 							if (intent.hasCategory(SeaCatClient.CATEGORY_SEACAT)) {
-								String action = intent.getAction();
 								// Listening for Client Tag changes
 								String client_tag = intent.getStringExtra(SeaCatClient.EXTRA_CLIENT_TAG);
 								if (client_tag != null && !client_tag.equals(clientTag)) {
 									clientTag = client_tag;
 									mMessengerServer.sendClientTag(client_tag);
 								}
+								// Action
+								String action = intent.getAction();
 								// Listening for state changes
 								if (action.equals(SeaCatClient.ACTION_SEACAT_STATE_CHANGED)) {
 									String state = intent.getStringExtra(SeaCatClient.EXTRA_STATE);
@@ -272,6 +275,19 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 			return "";
 		} else {
 			return SeaCatClient.getClientTag();
+		}
+	}
+
+	/**
+	 * Resets the connector's identity.
+	 */
+	public void resetIdentity() {
+		if (mConnector != null) {
+			try {
+				SeaCatClient.reset();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

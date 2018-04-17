@@ -5,6 +5,7 @@
     <string name="btn_start">Start sending</string>
     <string name="btn_stop">Stop sending</string>
     <string name="btn_log">Clear log</string>
+    <string name="btn_reset">Reset identity</string>
 
     <!-- View pager -->
     <string name="fragment_info">Info</string>

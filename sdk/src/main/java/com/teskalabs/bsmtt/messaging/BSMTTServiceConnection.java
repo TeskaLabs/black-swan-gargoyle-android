@@ -61,6 +61,24 @@ public class BSMTTServiceConnection implements ServiceConnection {
 	}
 
 	/**
+	 * Requests reset of the connector's identity.
+	 * There is no reply to this message.
+	 * @return boolean
+	 */
+	public boolean requestResetIdentity() {
+		if (mServiceMessenger == null)
+			return false;
+		try {
+			Message msg = Message.obtain(null, BSMTTMessage.MSG_RESET_IDENTITY);
+			mServiceMessenger.send(msg);
+			return true;
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	/**
 	 * Notifies the service to register a listener (activity) to send messages to.
 	 * @param className ComponentName
 	 * @param service IBinder
