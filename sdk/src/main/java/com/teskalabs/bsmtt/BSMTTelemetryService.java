@@ -91,7 +91,10 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		// Phone listener
 		TMgr.listen(PhoneStateListener, android.telephony.PhoneStateListener.LISTEN_NONE);
 		// Connector
-		mConnector.delete();
+		if (mConnector != null) {
+			mConnector.delete();
+			mConnector = null;
+		}
 		if (mSeaCatReceiver != null) {
 			unregisterReceiver(mSeaCatReceiver);
 			mSeaCatReceiver = null;
@@ -103,12 +106,14 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	/**
 	 * Runs the service which obtains phone-related data and sends them to a server.
 	 * @param context Context
+	 * @param sendDataToServer boolean (default true)
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
 			Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE})
-	public static void run(Context context) {
+	public static void run(Context context, boolean sendDataToServer) {
 		// Starting the service
 		Intent intent = new Intent(context, BSMTTelemetryService.class);
+		intent.putExtra("sendDataToServer", sendDataToServer);
 		context.startService(intent);
 	}
 
@@ -119,7 +124,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 * @return BSMTTServiceConnection
 	 */
 	public static BSMTTServiceConnection startConnection(Context context, BSMTTListener listener) {
-		// Binding the service
+		 // Binding the service
 		Intent intent = new Intent(context, BSMTTelemetryService.class);
 		try {
 			Messenger receiveMessenger = new Messenger(new BSMTTClientHandler(context, listener));
@@ -199,35 +204,40 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 				Log.e(LOG_TAG, getResources().getString(R.string.log_permissions));
 				stopSelf();
 			} else {
-				SeaCatClient.initialize(this);
-				// Initializing the sending object
-				mConnector = new Connector(this, getResources().getString(R.string.connector_url));
-				// Registering the SeaCat receiver
-				IntentFilter intentFilter = new IntentFilter();
-				intentFilter.addAction(SeaCatClient.ACTION_SEACAT_STATE_CHANGED);
-				intentFilter.addAction(SeaCatClient.ACTION_SEACAT_CSR_NEEDED);
-				intentFilter.addAction(SeaCatClient.ACTION_SEACAT_CLIENTID_CHANGED);
-				intentFilter.addCategory(SeaCatClient.CATEGORY_SEACAT);
-				if (isSeaCatReady(SeaCatClient.getState())) {
-					mConnector.setReady(); // we are ready to send data!
-				}
-				mSeaCatReceiver = new BroadcastReceiver() {
-					@Override
-					public void onReceive(Context context, Intent intent) {
-						if (intent.hasCategory(SeaCatClient.CATEGORY_SEACAT)) {
-							String action = intent.getAction();
-							if (action.equals(SeaCatClient.ACTION_SEACAT_STATE_CHANGED)) {
-								String state = intent.getStringExtra(SeaCatClient.EXTRA_STATE);
-								if (isSeaCatReady(state)) {
-									mConnector.setReady(); // we are ready to send data!
-								} else {
-									mConnector.unsetReady();
+				// Checking if the are allowed to send data to the server
+				if (intent.getBooleanExtra("sendDataToServer", true)) {
+					SeaCatClient.initialize(this);
+					// Initializing the sending object
+					mConnector = new Connector(this, getResources().getString(R.string.connector_url));
+					// Registering the SeaCat receiver
+					IntentFilter intentFilter = new IntentFilter();
+					intentFilter.addAction(SeaCatClient.ACTION_SEACAT_STATE_CHANGED);
+					intentFilter.addAction(SeaCatClient.ACTION_SEACAT_CSR_NEEDED);
+					intentFilter.addAction(SeaCatClient.ACTION_SEACAT_CLIENTID_CHANGED);
+					intentFilter.addCategory(SeaCatClient.CATEGORY_SEACAT);
+					if (isSeaCatReady(SeaCatClient.getState())) {
+						mConnector.setReady(); // we are ready to send data!
+					}
+					mSeaCatReceiver = new BroadcastReceiver() {
+						@Override
+						public void onReceive(Context context, Intent intent) {
+							if (intent.hasCategory(SeaCatClient.CATEGORY_SEACAT)) {
+								String action = intent.getAction();
+								if (action.equals(SeaCatClient.ACTION_SEACAT_STATE_CHANGED)) {
+									String state = intent.getStringExtra(SeaCatClient.EXTRA_STATE);
+									if (isSeaCatReady(state)) {
+										mConnector.setReady(); // we are ready to send data!
+									} else {
+										mConnector.unsetReady();
+									}
 								}
 							}
 						}
-					}
-				};
-				registerReceiver(mSeaCatReceiver, intentFilter);
+					};
+					registerReceiver(mSeaCatReceiver, intentFilter);
+				} else {
+					mConnector = null;
+				}
 				initialize(); // initialize
 			}
 		}
@@ -448,7 +458,9 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 			try {
 				JSONObject sendingJSON = new JSONObject(JSON.toString());
 				// Adding the data to the sender
-				mConnector.send(sendingJSON);
+				if (mConnector != null) {
+					mConnector.send(sendingJSON);
+				}
 				// Passing the data to activities
 				mMessengerServer.sendJSON(sendingJSON);
 			} catch (JSONException e) {

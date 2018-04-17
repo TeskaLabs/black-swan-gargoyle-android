@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 			} else {
 				// Starting the service
 				try {
-					BSMTTelemetryService.run(MainActivity.this);
+					BSMTTelemetryService.run(MainActivity.this, true);
 					mConnection = BSMTTelemetryService.startConnection(this, this);
 					// Button text
 					btn.setText(getResources().getString(R.string.btn_stop));
