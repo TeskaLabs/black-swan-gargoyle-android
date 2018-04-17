@@ -1,7 +1,7 @@
 package com.teskalabs.blackswan.gargoyle.events;
 
-import com.teskalabs.blackswan.gargoyle.BSMTTelemetryService;
-import com.teskalabs.blackswan.R;
+import com.teskalabs.blackswan.gargoyle.BSGargoyleService;
+import com.teskalabs.blackswan.gargoyle.R;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -13,14 +13,14 @@ import java.util.TimerTask;
 public class BasicEvent extends JsonEvent {
 	private boolean ticked;
 	private long mLastTime;
-	private BSMTTelemetryService mService;
+	private BSGargoyleService mService;
 
 	/**
 	 * A basic constructor.
-	 * @param service BSMTTelemetryService
+	 * @param service BSGargoyleService
 	 */
-	public BasicEvent(BSMTTelemetryService service) {
-		super(BSMTTEvents.BASIC_EVENT);
+	public BasicEvent(BSGargoyleService service) {
+		super(BSGargoyleEvents.BASIC_EVENT);
 		ticked = false;
 		mLastTime = 0;
 		mService = service;

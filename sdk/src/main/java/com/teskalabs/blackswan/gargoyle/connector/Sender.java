@@ -14,7 +14,7 @@ import com.teskalabs.seacat.android.client.SeaCatClient;
  * @author Premysl Cerny
  */
 public class Sender extends AsyncTask<JSONObject, String, Boolean> {
-	public static final String LOG_TAG = "BSMTTelemetrySender";
+	public static final String LOG_TAG = "BSGargoyleSender";
 
 	private Connector mConnector;
 

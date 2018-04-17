@@ -9,22 +9,22 @@ import android.os.RemoteException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 
-import com.teskalabs.blackswan.gargoyle.BSMTTelemetryService;
+import com.teskalabs.blackswan.gargoyle.BSGargoyleService;
 import com.teskalabs.blackswan.gargoyle.events.JsonEvent;
 
 /**
  * A simple server handler to keep clients to send messages to.
  * @author Premysl Cerny
  */
-public class BSMTTServerHandler extends Handler {
+public class BSGargoyleServerHandler extends Handler {
 	private ArrayList<Messenger> clients;
-	private BSMTTelemetryService mService;
+	private BSGargoyleService mService;
 
 	/**
 	 * A basic constructor.
-	 * @param service BSMTTelemetryService
+	 * @param service BSGargoyleService
 	 */
-	public BSMTTServerHandler(BSMTTelemetryService service) {
+	public BSGargoyleServerHandler(BSGargoyleService service) {
 		clients = new ArrayList<>();
 		mService = service;
 	}
@@ -42,16 +42,16 @@ public class BSMTTServerHandler extends Handler {
 			return;
 		// Handling the message
 		switch (msg.what) {
-			case BSMTTMessage.MSG_ADD_ACTIVITY:
+			case BSGargoyleMessage.MSG_ADD_ACTIVITY:
 				clients.add(msg.replyTo);
 				break;
-			case BSMTTMessage.MSG_GET_EVENT_LIST:
+			case BSGargoyleMessage.MSG_GET_EVENT_LIST:
 				sendJSONArray(msg.replyTo, mService.getEvents());
 				break;
-			case BSMTTMessage.MSG_GET_CLIENT_TAG:
+			case BSGargoyleMessage.MSG_GET_CLIENT_TAG:
 				sendClientTag(msg.replyTo, mService.getClientTag());
 				break;
-			case BSMTTMessage.MSG_RESET_IDENTITY:
+			case BSGargoyleMessage.MSG_RESET_IDENTITY:
 				mService.resetIdentity();
 				break;
 			default:
@@ -67,7 +67,7 @@ public class BSMTTServerHandler extends Handler {
 	public void sendJSON(JSONObject JSON) {
 		for (int i = 0; i < clients.size(); i++) {
 			try {
-				Message msg = Message.obtain(null, BSMTTMessage.MSG_JSON_EVENT);
+				Message msg = Message.obtain(null, BSGargoyleMessage.MSG_JSON_EVENT);
 				// Adding the data to be sent with the message
 				Bundle data = new Bundle();
 				data.putString("JSON", JSON.toString());
@@ -90,7 +90,7 @@ public class BSMTTServerHandler extends Handler {
 	public void sendJSONArray(Messenger receiver, ArrayList<JsonEvent> JSONs) {
 		try {
 			for (int i = 0; i < JSONs.size(); i++) {
-				Message msg = Message.obtain(null, BSMTTMessage.MSG_JSON_EVENT);
+				Message msg = Message.obtain(null, BSGargoyleMessage.MSG_JSON_EVENT);
 				// Adding the data to be sent with the message
 				Bundle data = new Bundle();
 				JSONObject json = JSONs.get(i).simpleGet();
@@ -110,7 +110,7 @@ public class BSMTTServerHandler extends Handler {
 	 */
 	public void sendClientTag(Messenger receiver, String ClientTag) {
 		try {
-			Message msg = Message.obtain(null, BSMTTMessage.MSG_CLIENT_TAG);
+			Message msg = Message.obtain(null, BSGargoyleMessage.MSG_CLIENT_TAG);
 			// Adding the data to be sent with the message
 			Bundle data = new Bundle();
 			data.putString("ClientTag", ClientTag);

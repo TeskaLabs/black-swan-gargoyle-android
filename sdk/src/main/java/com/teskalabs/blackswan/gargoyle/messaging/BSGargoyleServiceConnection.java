@@ -11,7 +11,7 @@ import android.os.RemoteException;
  * A connector between an activity and the service to register the activity as a client.
  * @author Premysl Cerny
  */
-public class BSMTTServiceConnection implements ServiceConnection {
+public class BSGargoyleServiceConnection implements ServiceConnection {
 	private Messenger mReceiveMessenger;
 	private Messenger mServiceMessenger;
 
@@ -19,7 +19,7 @@ public class BSMTTServiceConnection implements ServiceConnection {
 	 * A basic constructor.
 	 * @param receiveMessenger Messenger
 	 */
-	public BSMTTServiceConnection(Messenger receiveMessenger) {
+	public BSGargoyleServiceConnection(Messenger receiveMessenger) {
 		mReceiveMessenger = receiveMessenger;
 		mServiceMessenger = null;
 	}
@@ -32,7 +32,7 @@ public class BSMTTServiceConnection implements ServiceConnection {
 		if (mServiceMessenger == null)
 			return false;
 		try {
-			Message msg = Message.obtain(null, BSMTTMessage.MSG_GET_EVENT_LIST);
+			Message msg = Message.obtain(null, BSGargoyleMessage.MSG_GET_EVENT_LIST);
 			msg.replyTo = mReceiveMessenger;
 			mServiceMessenger.send(msg);
 			return true;
@@ -50,7 +50,7 @@ public class BSMTTServiceConnection implements ServiceConnection {
 		if (mServiceMessenger == null)
 			return false;
 		try {
-			Message msg = Message.obtain(null, BSMTTMessage.MSG_GET_CLIENT_TAG);
+			Message msg = Message.obtain(null, BSGargoyleMessage.MSG_GET_CLIENT_TAG);
 			msg.replyTo = mReceiveMessenger;
 			mServiceMessenger.send(msg);
 			return true;
@@ -69,7 +69,7 @@ public class BSMTTServiceConnection implements ServiceConnection {
 		if (mServiceMessenger == null)
 			return false;
 		try {
-			Message msg = Message.obtain(null, BSMTTMessage.MSG_RESET_IDENTITY);
+			Message msg = Message.obtain(null, BSGargoyleMessage.MSG_RESET_IDENTITY);
 			mServiceMessenger.send(msg);
 			return true;
 		} catch (RemoteException e) {
@@ -88,11 +88,11 @@ public class BSMTTServiceConnection implements ServiceConnection {
 		try {
 			// Notify the service
 			mServiceMessenger = new Messenger(service);
-			Message msg = Message.obtain(null, BSMTTMessage.MSG_ADD_ACTIVITY);
+			Message msg = Message.obtain(null, BSGargoyleMessage.MSG_ADD_ACTIVITY);
 			msg.replyTo = mReceiveMessenger;
 			mServiceMessenger.send(msg);
 			// Notify the app
-			mReceiveMessenger.send(Message.obtain(null, BSMTTMessage.MSG_CONNECTED));
+			mReceiveMessenger.send(Message.obtain(null, BSGargoyleMessage.MSG_CONNECTED));
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}

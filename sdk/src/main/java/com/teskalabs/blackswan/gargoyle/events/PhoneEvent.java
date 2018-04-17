@@ -17,7 +17,7 @@ public class PhoneEvent extends JsonEvent {
 	 * A basic constructor.
 	 */
 	public PhoneEvent() {
-		super(BSMTTEvents.PHONE_EVENT);
+		super(BSGargoyleEvents.PHONE_EVENT);
 		mPhoneResponse = null;
 	}
 

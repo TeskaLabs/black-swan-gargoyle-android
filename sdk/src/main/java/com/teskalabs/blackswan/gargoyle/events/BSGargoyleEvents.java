@@ -1,6 +1,6 @@
 package com.teskalabs.blackswan.gargoyle.events;
 
-import com.teskalabs.blackswan.gargoyle.BSMTTelemetryHelper;
+import com.teskalabs.blackswan.gargoyle.BSGargoyleHelper;
 
 import org.json.JSONObject;
 
@@ -10,7 +10,7 @@ import java.util.Iterator;
  * Holds event identifiers and a few helper methods.
  * @author Premysl Cerny
  */
-public class BSMTTEvents {
+public class BSGargoyleEvents {
 	public static final int BASIC_EVENT = 0;
 	public static final int CONNECTION_EVENT = 1;
 	public static final int PHONE_EVENT = 2;
@@ -28,19 +28,19 @@ public class BSMTTEvents {
 				String key = (String)keys.next();
 				switch (key) {
 					case "call_state":
-						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + BSMTTelemetryHelper.getCallState(JSON.getInt(key)) + ")");
+						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + BSGargoyleHelper.getCallState(JSON.getInt(key)) + ")");
 						break;
 					case "data_state":
-						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + BSMTTelemetryHelper.getDataState(JSON.getInt(key)) + ")");
+						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + BSGargoyleHelper.getDataState(JSON.getInt(key)) + ")");
 						break;
 					case "dconn":
-						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + BSMTTelemetryHelper.getDataState(JSON.getInt(key)) + ")");
+						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + BSGargoyleHelper.getDataState(JSON.getInt(key)) + ")");
 						break;
 					case "data_network_type":
-						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + BSMTTelemetryHelper.getNetworkType(JSON.getInt(key)) + ")");
+						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + BSGargoyleHelper.getNetworkType(JSON.getInt(key)) + ")");
 						break;
 					case "roaming":
-						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + BSMTTelemetryHelper.getRoaming(JSON.getInt(key)) + ")");
+						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + BSGargoyleHelper.getRoaming(JSON.getInt(key)) + ")");
 						break;
 					case "event_type":
 						JSON.put(key, String.valueOf(JSON.getInt(key)) + " (" + getEventTypeLabel(JSON.getInt(key)) + ")");

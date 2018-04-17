@@ -11,15 +11,15 @@ import org.json.JSONObject;
  * A simple client to receive messages and pass them to a listener.
  * @author Premysl Cerny
  */
-public class BSMTTClientHandler extends Handler {
-	private BSMTTListener mListener;
+public class BSGargoyleClientHandler extends Handler {
+	private BSGargoyleListener mListener;
 	private Context mContext;
 
 	/**
 	 * A simple constructor.
-	 * @param listener BSMTTListener
+	 * @param listener BSGargoyleListener
 	 */
-	public BSMTTClientHandler(Context context, BSMTTListener listener) {
+	public BSGargoyleClientHandler(Context context, BSGargoyleListener listener) {
 		mContext = context;
 		mListener = listener;
 	}
@@ -38,14 +38,14 @@ public class BSMTTClientHandler extends Handler {
 		// Handling special cases (JSON)
 		Bundle data = msg.getData();
 		switch (msg.what) {
-			case BSMTTMessage.MSG_JSON_EVENT:
+			case BSGargoyleMessage.MSG_JSON_EVENT:
 				try {
 					msg.obj = new JSONObject(data.getString("JSON"));
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
 				break;
-			case BSMTTMessage.MSG_CLIENT_TAG:
+			case BSGargoyleMessage.MSG_CLIENT_TAG:
 				msg.obj = data.getString("ClientTag");
 				break;
 		}

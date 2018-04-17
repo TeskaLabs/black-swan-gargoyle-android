@@ -6,7 +6,7 @@ import android.os.Message;
  * An interface through which to receive messages from the SDK service.
  * @author Premysl Cerny
  */
-public interface BSMTTListener {
+public interface BSGargoyleListener {
 	/**
 	 * Receives a message where an action can be taken.
 	 * @param msg Message

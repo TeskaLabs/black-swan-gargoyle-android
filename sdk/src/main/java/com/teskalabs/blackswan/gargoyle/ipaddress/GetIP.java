@@ -3,7 +3,7 @@ package com.teskalabs.blackswan.gargoyle.ipaddress;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.teskalabs.blackswan.gargoyle.BSMTTelemetryHelper;
+import com.teskalabs.blackswan.gargoyle.BSGargoyleHelper;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -64,7 +64,7 @@ public class GetIP extends AsyncTask<String, String, String> {
 				while (ee.hasMoreElements())
 				{
 					InetAddress i = (InetAddress) ee.nextElement();
-					mIP = BSMTTelemetryHelper.str_rem_pct(i.getHostAddress());
+					mIP = BSGargoyleHelper.str_rem_pct(i.getHostAddress());
 
 					if (!((mIP.contains("::1")) || (mIP.contains("127.0.0.1")))) {
 						if (mIP.contains(":")) {

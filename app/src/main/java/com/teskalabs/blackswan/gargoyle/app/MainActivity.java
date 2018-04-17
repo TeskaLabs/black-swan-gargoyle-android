@@ -16,7 +16,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.Spanned;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -24,12 +23,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.teskalabs.blackswan.R;
-import com.teskalabs.blackswan.gargoyle.BSMTTelemetryService;
-import com.teskalabs.blackswan.gargoyle.events.BSMTTEvents;
-import com.teskalabs.blackswan.gargoyle.messaging.BSMTTListener;
-import com.teskalabs.blackswan.gargoyle.messaging.BSMTTMessage;
-import com.teskalabs.blackswan.gargoyle.messaging.BSMTTServiceConnection;
+import com.teskalabs.blackswan.gargoyle.BSGargoyleService;
+import com.teskalabs.blackswan.gargoyle.events.BSGargoyleEvents;
+import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleServiceConnection;
+import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleListener;
+import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleMessage;
 import com.teskalabs.blackswan.gargoyle.app.fragments.FragmentInfo;
 import com.teskalabs.blackswan.gargoyle.app.fragments.FragmentLog;
 import com.teskalabs.blackswan.gargoyle.app.fragments.ViewPagerAdapter;
@@ -42,7 +40,7 @@ import java.util.Iterator;
  * Main activity class that calls the BS SDK to gather and send data.
  * @author Premysl Cerny
  */
-public class MainActivity extends AppCompatActivity implements BSMTTListener {
+public class MainActivity extends AppCompatActivity implements BSGargoyleListener {
 	// GPS
 	public static int GPS_SETTINGS_INTENT = 200;
 	private boolean mOnlyWifiLoc;
@@ -50,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	public static int ACCESS_FINE_LOCATION_PERMISSION = 300;
 	public static int READ_PHONE_STATE_PERMISSION = 301;
 	// Connection with the service
-	private BSMTTServiceConnection mConnection;
+	private BSGargoyleServiceConnection mConnection;
 	private boolean isConnected;
 	// JSON showing
 	private boolean wasFirstJSON;
@@ -77,10 +75,10 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 
 		// Preparing the button text
 		Button btn = findViewById(R.id.sendButton);
-		if (BSMTTelemetryService.isRunning(this)) {
+		if (BSGargoyleService.isRunning(this)) {
 			btn.setText(getResources().getString(R.string.btn_stop));
 			// Register the connection
-			mConnection = BSMTTelemetryService.startConnection(this, this);
+			mConnection = BSGargoyleService.startConnection(this, this);
 		}
 
 		// View pager
@@ -149,27 +147,27 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	public void onButtonClick(View view) {
 		if (isFineLocationPermissionGranted() && isPhoneStatePermissionGranted()) {
 			// GPS enabled
-			if (!checkGPSEnabled() && !BSMTTelemetryService.isRunning(MainActivity.this)) {
+			if (!checkGPSEnabled() && !BSGargoyleService.isRunning(MainActivity.this)) {
 				showGPSDisabledAlertToUserAndContinue();
 				return;
 			}
 			// Starting or stopping the service
 			Button btn = findViewById(R.id.sendButton);
-			if (BSMTTelemetryService.isRunning(MainActivity.this)) {
+			if (BSGargoyleService.isRunning(MainActivity.this)) {
 				// Stopping the service
 				isConnected = false;
 				if (mConnection != null) {
-					BSMTTelemetryService.stopConnection(this, mConnection);
+					BSGargoyleService.stopConnection(this, mConnection);
 				}
-				BSMTTelemetryService.stop(MainActivity.this);
+				BSGargoyleService.stop(MainActivity.this);
 				// Button text
 				btn.setText(getResources().getString(R.string.btn_start));
 				invalidateOptionsMenu(); // menu
 			} else {
 				// Starting the service
 				try {
-					BSMTTelemetryService.run(MainActivity.this, true);
-					mConnection = BSMTTelemetryService.startConnection(this, this);
+					BSGargoyleService.run(MainActivity.this, true);
+					mConnection = BSGargoyleService.startConnection(this, this);
 					// Button text
 					btn.setText(getResources().getString(R.string.btn_stop));
 				} catch (SecurityException e) {
@@ -207,11 +205,11 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	public boolean onReceiveMessage(Message msg) {
 		// Processing the event
 		switch (msg.what) {
-			case BSMTTMessage.MSG_JSON_EVENT:
+			case BSGargoyleMessage.MSG_JSON_EVENT:
 				JSONObject JSON = (JSONObject)msg.obj;
 				showDataFromJSON(JSON);
 				return true;
-			case BSMTTMessage.MSG_CLIENT_TAG:
+			case BSGargoyleMessage.MSG_CLIENT_TAG:
 				clientTag = (String)msg.obj;
 				// Refresh in the info log
 				if (lastBasicEvent != null) {
@@ -222,7 +220,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 					}
 				}
 				return true;
-			case BSMTTMessage.MSG_CONNECTED:
+			case BSGargoyleMessage.MSG_CONNECTED:
 				if (mConnection != null) {
 					mConnection.requestCurrentData();
 					mConnection.requestClientTag();
@@ -241,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	private void showDataFromJSON(JSONObject JSON) {
 		try {
 			if (JSON.has("event_type")) {
-				if (JSON.getInt("event_type") == BSMTTEvents.BASIC_EVENT) {
+				if (JSON.getInt("event_type") == BSGargoyleEvents.BASIC_EVENT) {
 					lastBasicEvent = JSON.toString();
 					JSON.put("event_type", null); // no need of this info
 					JSON.put("@timestamp", null); // no need of this info
@@ -257,7 +255,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 					JSON.put("MCC_MNC", null);
 					JSON.put("net_name", null);
 					// Get lookups
-					JSON = BSMTTEvents.lookupFormatter(JSON);
+					JSON = BSGargoyleEvents.lookupFormatter(JSON);
 					// Showing
 					showDataInLog(JSON);
 				}

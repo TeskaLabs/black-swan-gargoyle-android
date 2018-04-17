@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.teskalabs.blackswan.R;
+import com.teskalabs.blackswan.gargoyle.app.R;
 
 /**
  * A simple fragment for showing logs.

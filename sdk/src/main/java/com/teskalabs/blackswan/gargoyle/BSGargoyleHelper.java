@@ -31,7 +31,7 @@ import java.util.List;
  * A class that holds all helper methods to get information about the phone and process them.
  * @author Stepan Hruska, Premysl Cerny
  */
-public class BSMTTelemetryHelper {
+public class BSGargoyleHelper {
 
 	// Getting information from variables ----------------------------------------------------------
 
@@ -328,7 +328,7 @@ public class BSMTTelemetryHelper {
 					// cell
 					currentData.setTac(cid.getTac());
 					currentData.setPci(cid.getPci());
-					currentData.setEnb(BSMTTelemetryHelper.getLteENodeB(cid.getCi()));
+					currentData.setEnb(BSGargoyleHelper.getLteENodeB(cid.getCi()));
 					currentData.setCi(getLteCid(cid.getCi()));
 					// signal
 					currentData.setASU(cs.getAsuLevel());
@@ -358,8 +358,8 @@ public class BSMTTelemetryHelper {
 					CellSignalStrengthWcdma cs = ((CellInfoWcdma) ci).getCellSignalStrength();
 					// cell
 					currentData.setLac(cid.getLac());
-					currentData.setRnc(BSMTTelemetryHelper.getRNCid(cid.getCid()));
-					currentData.setCid(BSMTTelemetryHelper.getUMTScid(cid.getCid()));
+					currentData.setRnc(BSGargoyleHelper.getRNCid(cid.getCid()));
+					currentData.setCid(BSGargoyleHelper.getUMTScid(cid.getCid()));
 					currentData.setPsc(cid.getPsc());
 					// signal
 					currentData.setASU(cs.getAsuLevel());

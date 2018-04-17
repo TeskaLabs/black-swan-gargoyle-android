@@ -14,7 +14,7 @@
     <application>
 
         <service
-            android:name="com.teskalabs.blackswan.gargoyle.BSMTTelemetryService"
+            android:name="com.teskalabs.blackswan.gargoyle.BSGargoyleService"
             android:process=":bsgargoyle"
             android:exported="false">
         </service>

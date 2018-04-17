@@ -17,7 +17,7 @@ public class CellEvent extends JsonEvent {
 	 * A basic constructor.
 	 */
 	public CellEvent() {
-		super(BSMTTEvents.CELL_EVENT);
+		super(BSGargoyleEvents.CELL_EVENT);
 		m_cellData = new CellData();
 	}
 

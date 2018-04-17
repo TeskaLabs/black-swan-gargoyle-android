@@ -4,7 +4,7 @@ package com.teskalabs.blackswan.gargoyle.messaging;
  * Contains definitions of messages.
  * @author Premysl Cerny
  */
-public class BSMTTMessage {
+public class BSGargoyleMessage {
 	// Requests
 	public static final int MSG_ADD_ACTIVITY = 1;
 	public static final int MSG_GET_EVENT_LIST = 2;

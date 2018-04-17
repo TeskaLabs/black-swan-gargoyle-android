@@ -24,7 +24,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.teskalabs.blackswan.R;
 import com.teskalabs.blackswan.gargoyle.cell.CellData;
 import com.teskalabs.blackswan.gargoyle.connector.Connector;
 import com.teskalabs.blackswan.gargoyle.events.BasicEvent;
@@ -33,10 +32,10 @@ import com.teskalabs.blackswan.gargoyle.events.ConnectionEvent;
 import com.teskalabs.blackswan.gargoyle.events.JsonEvent;
 import com.teskalabs.blackswan.gargoyle.events.PhoneEvent;
 import com.teskalabs.blackswan.gargoyle.location.LocationHelper;
-import com.teskalabs.blackswan.gargoyle.messaging.BSMTTClientHandler;
-import com.teskalabs.blackswan.gargoyle.messaging.BSMTTListener;
-import com.teskalabs.blackswan.gargoyle.messaging.BSMTTServerHandler;
-import com.teskalabs.blackswan.gargoyle.messaging.BSMTTServiceConnection;
+import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleListener;
+import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleServiceConnection;
+import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleClientHandler;
+import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleServerHandler;
 import com.teskalabs.blackswan.gargoyle.phonestate.PhoneListener;
 import com.teskalabs.blackswan.gargoyle.phonestate.PhoneListenerCallback;
 import com.teskalabs.blackswan.gargoyle.phonestate.PhoneResponse;
@@ -46,8 +45,8 @@ import com.teskalabs.seacat.android.client.SeaCatClient;
  * This class gets information about the phone and its behavior and sends them to the server when necessary.
  * @author Stepan Hruska, Premysl Cerny
  */
-public class BSMTTelemetryService extends Service implements PhoneListenerCallback, LocationListener {
-	public static final String LOG_TAG = "BSMTTelemetryService";
+public class BSGargoyleService extends Service implements PhoneListenerCallback, LocationListener {
+	public static final String LOG_TAG = "BSGargoyleService";
 
 	// Event constants
 	public static final int BASIC_EVENT_INDEX = 0;
@@ -65,7 +64,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	private PhoneListener PhoneStateListener;
 	// Connection with activities
 	private Messenger mMessenger;
-	private BSMTTServerHandler mMessengerServer;
+	private BSGargoyleServerHandler mMessengerServer;
 	// List of JSON events
 	ArrayList<JsonEvent> mEvents;
 	// The current location
@@ -74,9 +73,9 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	/**
 	 * A basic constructor.
 	 */
-	public BSMTTelemetryService() {
+	public BSGargoyleService() {
 		// Messaging
-		mMessengerServer = new BSMTTServerHandler(this);
+		mMessengerServer = new BSGargoyleServerHandler(this);
 		mMessenger = new Messenger(mMessengerServer);
 		// Events
 		mEvents = new ArrayList<>();
@@ -118,7 +117,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 			Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE})
 	public static void run(Context context, boolean sendDataToServer) {
 		// Starting the service
-		Intent intent = new Intent(context, BSMTTelemetryService.class);
+		Intent intent = new Intent(context, BSGargoyleService.class);
 		intent.putExtra("sendDataToServer", sendDataToServer);
 		context.startService(intent);
 	}
@@ -126,15 +125,15 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	/**
 	 * Creates a connection between a service and an activity to communicate through messages.
 	 * @param context Context
-	 * @param listener BSMTTListener
-	 * @return BSMTTServiceConnection
+	 * @param listener BSGargoyleListener
+	 * @return BSGargoyleServiceConnection
 	 */
-	public static BSMTTServiceConnection startConnection(Context context, BSMTTListener listener) {
+	public static BSGargoyleServiceConnection startConnection(Context context, BSGargoyleListener listener) {
 		 // Binding the service
-		Intent intent = new Intent(context, BSMTTelemetryService.class);
+		Intent intent = new Intent(context, BSGargoyleService.class);
 		try {
-			Messenger receiveMessenger = new Messenger(new BSMTTClientHandler(context, listener));
-			BSMTTServiceConnection connection = new BSMTTServiceConnection(receiveMessenger);
+			Messenger receiveMessenger = new Messenger(new BSGargoyleClientHandler(context, listener));
+			BSGargoyleServiceConnection connection = new BSGargoyleServiceConnection(receiveMessenger);
 			context.bindService(intent, connection, Context.BIND_AUTO_CREATE);
 			return connection;
 		} catch (SecurityException e) {
@@ -146,9 +145,9 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	/**
 	 * Shuts down a connection between an activity and a service.
 	 * @param context Context
-	 * @param connection BSMTTServiceConnection
+	 * @param connection BSGargoyleServiceConnection
 	 */
-	public static void stopConnection(Context context, BSMTTServiceConnection connection) {
+	public static void stopConnection(Context context, BSGargoyleServiceConnection connection) {
 		// Unbinding
 		if (connection != null)
 			context.unbindService(connection);
@@ -159,7 +158,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 * @param context Context
 	 */
 	public static void stop(Context context) {
-		Intent intent = new Intent(context, BSMTTelemetryService.class);
+		Intent intent = new Intent(context, BSGargoyleService.class);
 		// Stopping
 		context.stopService(intent);
 	}
@@ -173,7 +172,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		ActivityManager manager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
 		try {
 			for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-				if ("com.teskalabs.blackswan.gargoyle.BSMTTelemetryService".equals(service.service.getClassName())) {
+				if ("com.teskalabs.blackswan.gargoyle.BSGargoyleService".equals(service.service.getClassName())) {
 					return true;
 				}
 			}
@@ -205,8 +204,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (intent != null) {
-			if (!BSMTTelemetryHelper.isFineLocationPermissionGranted(this)
-					|| !BSMTTelemetryHelper.isPhoneStatePermissionGranted(this)) {
+			if (!BSGargoyleHelper.isFineLocationPermissionGranted(this)
+					|| !BSGargoyleHelper.isPhoneStatePermissionGranted(this)) {
 				Log.e(LOG_TAG, getResources().getString(R.string.log_permissions));
 				stopSelf();
 			} else {
@@ -382,8 +381,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		// Phone information
 		try {
 			JsonEvent.changePhoneInfoAtAll(mEvents,
-					BSMTTelemetryHelper.getPhoneVendorModel(),
-					BSMTTelemetryHelper.getPhoneTypeStr(TMgr),
+					BSGargoyleHelper.getPhoneVendorModel(),
+					BSGargoyleHelper.getPhoneTypeStr(TMgr),
 					TMgr.getSubscriberId(),
 					TMgr.getDeviceId(),
 					TMgr.getLine1Number(),
@@ -412,10 +411,10 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 			roaming = -1;
 		}
 		// Other info
-		boolean haveMobileConnection = BSMTTelemetryHelper.haveMobileConnection(this);
+		boolean haveMobileConnection = BSGargoyleHelper.haveMobileConnection(this);
 		int dconn = TMgr.getDataState();
 		// if (m_phoneResponse != null) {
-		// dataNetStr = BSMTTelemetryHelper.getNetworkType(m_phoneResponse.getData_networkType());
+		// dataNetStr = BSGargoyleHelper.getNetworkType(m_phoneResponse.getData_networkType());
 		// }
 		// Saving
 		ConnectionEvent connectionEvent = (ConnectionEvent)mEvents.get(CONNECTION_EVENT_INDEX);
@@ -424,8 +423,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		// Cell info
 		CellEvent cellEvent = (CellEvent)mEvents.get(CELL_EVENT_INDEX);
 		CellData cellData = cellEvent.getCellData();
-		cellData = BSMTTelemetryHelper.getCellLocation(cellData, TMgr, cellEvent.getPhoneTypeStr());
-		cellData = BSMTTelemetryHelper.getCellSignal(cellData, TMgr);
+		cellData = BSGargoyleHelper.getCellLocation(cellData, TMgr, cellEvent.getPhoneTypeStr());
+		cellData = BSGargoyleHelper.getCellSignal(cellData, TMgr);
 		cellEvent.changeCell(cellData);
 	}
 

@@ -16,7 +16,7 @@ public class ConnectionEvent extends JsonEvent {
 	 * A basic constructor.
 	 */
 	public ConnectionEvent() {
-		super(BSMTTEvents.CONNECTION_EVENT);
+		super(BSGargoyleEvents.CONNECTION_EVENT);
 		haveMobileConnection = false;
 		dconn = Integer.MIN_VALUE;
 		mRoaming = Integer.MIN_VALUE;
