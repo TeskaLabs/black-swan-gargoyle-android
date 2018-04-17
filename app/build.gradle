@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
 
 android {
     compileSdkVersion 26
@@ -21,6 +22,8 @@ android {
 dependencies {
     compile project(':seacat')
     compile project(':sdk')
+    compile 'com.google.firebase:firebase-core:12.0.1'
+    compile 'com.crashlytics.sdk.android:crashlytics:2.9.1'
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:26.1.0'
@@ -30,3 +33,5 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 }
+
+apply plugin: 'com.google.gms.google-services'
