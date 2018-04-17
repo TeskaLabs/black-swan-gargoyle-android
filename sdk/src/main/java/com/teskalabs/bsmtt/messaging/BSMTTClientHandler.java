@@ -45,6 +45,9 @@ public class BSMTTClientHandler extends Handler {
 					e.printStackTrace();
 				}
 				break;
+			case BSMTTMessage.MSG_CLIENT_TAG:
+				msg.obj = data.getString("ClientTag");
+				break;
 		}
 		// Sending the message to the registered listener
 		if (!mListener.onReceiveMessage(msg))

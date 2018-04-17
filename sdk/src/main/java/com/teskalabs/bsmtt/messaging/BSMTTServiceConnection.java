@@ -43,6 +43,24 @@ public class BSMTTServiceConnection implements ServiceConnection {
 	}
 
 	/**
+	 * Requests the connector's client tag.
+	 * @return boolean
+	 */
+	public boolean requestClientTag() {
+		if (mServiceMessenger == null)
+			return false;
+		try {
+			Message msg = Message.obtain(null, BSMTTMessage.MSG_GET_CLIENT_TAG);
+			msg.replyTo = mReceiveMessenger;
+			mServiceMessenger.send(msg);
+			return true;
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	/**
 	 * Notifies the service to register a listener (activity) to send messages to.
 	 * @param className ComponentName
 	 * @param service IBinder

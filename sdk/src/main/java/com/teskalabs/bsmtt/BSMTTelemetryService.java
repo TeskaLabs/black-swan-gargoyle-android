@@ -56,6 +56,7 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	private TelephonyManager TMgr;
 	// Sending data
 	private Connector mConnector;
+	private String clientTag;
 	private BroadcastReceiver mSeaCatReceiver;
 	// Listeners
 	private PhoneListener PhoneStateListener;
@@ -76,6 +77,8 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 		mMessenger = new Messenger(mMessengerServer);
 		// Events
 		mEvents = new ArrayList<>();
+		// Other
+		clientTag = "";
 	}
 
 	/**
@@ -223,6 +226,13 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 						public void onReceive(Context context, Intent intent) {
 							if (intent.hasCategory(SeaCatClient.CATEGORY_SEACAT)) {
 								String action = intent.getAction();
+								// Listening for Client Tag changes
+								String client_tag = intent.getStringExtra(SeaCatClient.EXTRA_CLIENT_TAG);
+								if (client_tag != null && !client_tag.equals(clientTag)) {
+									clientTag = client_tag;
+									mMessengerServer.sendClientTag(client_tag);
+								}
+								// Listening for state changes
 								if (action.equals(SeaCatClient.ACTION_SEACAT_STATE_CHANGED)) {
 									String state = intent.getStringExtra(SeaCatClient.EXTRA_STATE);
 									if (isSeaCatReady(state)) {
@@ -251,6 +261,18 @@ public class BSMTTelemetryService extends Service implements PhoneListenerCallba
 	 */
 	private boolean isSeaCatReady(String state) {
 		return ((state.charAt(3) == 'Y') && (state.charAt(4) == 'N') && (state.charAt(0) != 'f'));
+	}
+
+	/**
+	 * Gets the connector's client tag.
+	 * @return String
+	 */
+	public String getClientTag() {
+		if (mConnector == null) {
+			return "";
+		} else {
+			return SeaCatClient.getClientTag();
+		}
 	}
 
 	/**

@@ -39,7 +39,7 @@ import java.util.Iterator;
  */
 public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	// GPS
-	public static int GPS_SETTINS_INTENT = 200;
+	public static int GPS_SETTINGS_INTENT = 200;
 	private boolean mOnlyWifiLoc;
 	// Permissions
 	public static int ACCESS_FINE_LOCATION_PERMISSION = 300;
@@ -48,6 +48,9 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	private BSMTTServiceConnection mConnection;
 	// JSON showing
 	private boolean wasFirstJSON;
+	// Keeping some important data
+	private String clientTag;
+	private JSONObject lastBasicEvent;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +61,8 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 		mConnection = null;
 		wasFirstJSON = false;
 		mOnlyWifiLoc = false;
+		clientTag = "";
+		lastBasicEvent = null;
 
 		// Preparing the button text
 		Button btn = findViewById(R.id.sendButton);
@@ -128,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	/**
 	 * Reacts to messages sent by the service.
 	 * @param msg Message
-	 * @return boolean
+	 * @return boolean (true if the event was processed)
 	 */
 	@Override
 	public boolean onReceiveMessage(Message msg) {
@@ -138,9 +143,17 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 				JSONObject JSON = (JSONObject)msg.obj;
 				showDataFromJSON(JSON);
 				return true;
+			case BSMTTMessage.MSG_CLIENT_TAG:
+				clientTag = (String)msg.obj;
+				// Refresh in the info log
+				if (lastBasicEvent != null) {
+					showDataFromJSON(lastBasicEvent);
+				}
+				return true;
 			case BSMTTMessage.MSG_CONNECTED:
 				if (mConnection != null) {
 					mConnection.requestCurrentData();
+					mConnection.requestClientTag();
 				}
 				return true;
 		}
@@ -155,6 +168,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 		try {
 			if (JSON.has("event_type")) {
 				if (JSON.getInt("event_type") == BSMTTEvents.BASIC_EVENT) {
+					lastBasicEvent = JSON;
 					JSON.put("event_type", null); // no need of this info
 					JSON.put("@timestamp", null); // no need of this info
 					showDataInInfo(JSON);
@@ -188,6 +202,12 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 		TextView infoView = findViewById(R.id.infoView);
 		// Preparing variables
 		StringBuilder onlyText = new StringBuilder();
+		// Adding the client tag (SeaCat)
+		if (!clientTag.equals("")) {
+			onlyText.append("<b>Client Tag</b>: ");
+			onlyText.append(clientTag);
+			onlyText.append("<br />");
+		}
 		// Iterating through the JSON
 		Iterator<String> iterator = JSON.keys();
 		while (iterator.hasNext()) {
@@ -277,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 								mOnlyWifiLoc = false;
 								Intent callGPSSettingIntent = new Intent(
 										android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-								startActivityForResult(callGPSSettingIntent, GPS_SETTINS_INTENT);
+								startActivityForResult(callGPSSettingIntent, GPS_SETTINGS_INTENT);
 								dialogInterface.cancel();
 							}
 						})
@@ -287,7 +307,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 						mOnlyWifiLoc = true;
 						Intent callGPSSettingIntent = new Intent(
 								android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-						startActivityForResult(callGPSSettingIntent, GPS_SETTINS_INTENT);
+						startActivityForResult(callGPSSettingIntent, GPS_SETTINGS_INTENT);
 						dialogInterface.cancel();
 					}
 				});
@@ -303,7 +323,7 @@ public class MainActivity extends AppCompatActivity implements BSMTTListener {
 	 */
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == GPS_SETTINS_INTENT) {
+		if (requestCode == GPS_SETTINGS_INTENT) {
 			// Continue here
 			onButtonClick(null);
 		}

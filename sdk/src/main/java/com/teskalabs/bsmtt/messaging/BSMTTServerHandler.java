@@ -48,6 +48,8 @@ public class BSMTTServerHandler extends Handler {
 			case BSMTTMessage.MSG_GET_EVENT_LIST:
 				sendJSONArray(msg.replyTo, mService.getEvents());
 				break;
+			case BSMTTMessage.MSG_GET_CLIENT_TAG:
+				sendClientTag(msg.replyTo, mService.getClientTag());
 			default:
 				super.handleMessage(msg);
 				break;
@@ -95,6 +97,34 @@ public class BSMTTServerHandler extends Handler {
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * A method to send the connector's client tag.
+	 * @param receiver Messenger
+	 */
+	public void sendClientTag(Messenger receiver, String ClientTag) {
+		try {
+			Message msg = Message.obtain(null, BSMTTMessage.MSG_CLIENT_TAG);
+			// Adding the data to be sent with the message
+			Bundle data = new Bundle();
+			data.putString("ClientTag", ClientTag);
+			msg.setData(data);
+			// Sending
+			receiver.send(msg);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * A method to send the connector's client tag.
+	 * @param ClientTag String
+	 */
+	public void sendClientTag(String ClientTag) {
+		for (int i = 0; i < clients.size(); i++) {
+			sendClientTag(clients.get(i), ClientTag);
 		}
 	}
 }
