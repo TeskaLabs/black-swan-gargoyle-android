@@ -273,6 +273,8 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 		// Getting the view
 		TextView infoView = findViewById(R.id.infoView);
 		// Preparing variables
+		if (infoView == null || infoView.getText() == null)
+			return;
 		StringBuilder onlyText = new StringBuilder();
 		// Adding the client tag (SeaCat)
 		if (!clientTag.equals("")) {
@@ -309,6 +311,8 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 		// Getting the view
 		TextView logView = findViewById(R.id.logView);
 		// Preparing variables
+		if (logView == null || logView.getText() == null)
+			return;
 		String oldText = Html.toHtml((Spanned)logView.getText());
 		StringBuilder newText = new StringBuilder();
 		// Iterating through the JSON

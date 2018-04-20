@@ -210,7 +210,7 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 				stopSelf();
 			} else {
 				// Checking if the are allowed to send data to the server
-				if (intent.getBooleanExtra("sendDataToServer", true)) {
+				if (intent.getBooleanExtra("sendDataToServer", false)) {
 					SeaCatClient.initialize(this);
 					// Initializing the sending object
 					mConnector = new Connector(this, getResources().getString(R.string.connector_url));
