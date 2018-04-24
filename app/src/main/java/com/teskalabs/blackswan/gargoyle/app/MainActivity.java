@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 			} else {
 				// Starting the service
 				try {
-					BSGargoyleService.run(MainActivity.this, true);
+					BSGargoyleService.run(MainActivity.this);
 					mConnection = BSGargoyleService.startConnection(this, this);
 					// Button text
 					btn.setText(getResources().getString(R.string.btn_stop));

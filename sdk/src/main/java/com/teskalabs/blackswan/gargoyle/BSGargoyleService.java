@@ -7,6 +7,8 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -111,14 +113,12 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	/**
 	 * Runs the service which obtains phone-related data and sends them to a server.
 	 * @param context Context
-	 * @param sendDataToServer boolean (default true)
 	 */
 	@RequiresPermission(allOf = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
 			Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE})
-	public static void run(Context context, boolean sendDataToServer) {
+	public static void run(Context context) {
 		// Starting the service
 		Intent intent = new Intent(context, BSGargoyleService.class);
-		intent.putExtra("sendDataToServer", sendDataToServer);
 		context.startService(intent);
 	}
 
@@ -195,6 +195,21 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	}
 
 	/**
+	 * Gets information about allowed sending to the server via SeaCat.
+	 * @return boolean
+	 */
+	public boolean isSendingAllowed() {
+		try {
+			ApplicationInfo ai = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+			Bundle bundle = ai.metaData;
+			return bundle.getBoolean("bsgargoyle.send_data", false);
+		} catch (PackageManager.NameNotFoundException|NullPointerException e) {
+			Log.e(LOG_TAG, "Unable to load application meta-data: " + e.getMessage());
+			return false;
+		}
+	}
+
+	/**
 	 * Checks permissions, initializes the service and obtains the data.
 	 * @param intent Intent
 	 * @param flags int
@@ -210,7 +225,7 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 				stopSelf();
 			} else {
 				// Checking if the are allowed to send data to the server
-				if (intent.getBooleanExtra("sendDataToServer", false)) {
+				if (isSendingAllowed()) {
 					SeaCatClient.initialize(this);
 					// Initializing the sending object
 					mConnector = new Connector(this, getResources().getString(R.string.connector_url));

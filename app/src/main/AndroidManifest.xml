@@ -18,6 +18,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <meta-data
+            android:name="bsgargoyle.send_data"
+            android:value="true" />
+
         <activity android:name="com.teskalabs.blackswan.gargoyle.app.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
