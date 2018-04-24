@@ -3,8 +3,13 @@ package com.teskalabs.blackswan.gargoyle.connector;
 import android.content.Context;
 import android.os.AsyncTask;
 import org.json.JSONObject;
+
+import java.security.GeneralSecurityException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+
+import com.teskalabs.blackswan.gargoyle.R;
+import com.teskalabs.blackswan.gargoyle.crypto.RSAEncryption;
 import com.treebo.internetavailabilitychecker.InternetAvailabilityChecker;
 import com.treebo.internetavailabilitychecker.InternetConnectivityListener;
 
@@ -13,7 +18,8 @@ import com.treebo.internetavailabilitychecker.InternetConnectivityListener;
  * @author Premysl Cerny
  */
 public class Connector implements InternetConnectivityListener {
-	private Deque<JSONObject> mQueue;
+	private Context mContext;
+	private Deque<byte[]> mQueue;
 	private String mUrl;
 	private boolean isSending;
 	private boolean isReady;
@@ -26,6 +32,7 @@ public class Connector implements InternetConnectivityListener {
 	 * @param url String
 	 */
 	public Connector(Context context, String url) {
+		mContext = context;
 		mUrl = url;
 		mQueue = new ArrayDeque<>();
 		isSending = false;
@@ -68,11 +75,24 @@ public class Connector implements InternetConnectivityListener {
 	}
 
 	/**
-	 * Adds an item to the queue to be sent.
+	 * Adds an item to the queue to be sent and encrypts it.
 	 * @param JSON JSONObject
 	 */
 	public void send(JSONObject JSON) {
-		mQueue.add(JSON);
+		byte[] res = RSAEncryption.encrypt(JSON.toString().getBytes(),
+				mContext.getResources().openRawResource(R.raw.public_key));
+		if (res != null) {
+			mQueue.add(res);
+			run();
+		}
+	}
+
+	/**
+	 * Adds an item to the queue to be sent.
+	 * @param byteJSON byte[]
+	 */
+	public void send(byte[] byteJSON) {
+		mQueue.add(byteJSON);
 		run();
 	}
 
@@ -85,12 +105,12 @@ public class Connector implements InternetConnectivityListener {
 			return;
 		if (mConnected) {
 			if (!isSending) {
-				JSONObject JSON = mQueue.pollFirst();
-				if (JSON != null) {
+				byte[] byteJSON = mQueue.pollFirst();
+				if (byteJSON != null) {
 					isSending = true;
 					// a new instance
 					mSender = new Sender(this);
-					mSender.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, JSON);
+					mSender.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, byteJSON);
 				}
 			}
 		}
