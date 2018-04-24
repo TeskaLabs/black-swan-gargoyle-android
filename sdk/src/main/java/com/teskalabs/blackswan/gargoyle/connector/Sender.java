@@ -2,7 +2,6 @@ package com.teskalabs.blackswan.gargoyle.connector;
 
 import android.os.AsyncTask;
 import android.util.Log;
-import org.json.JSONObject;
 import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -13,7 +12,7 @@ import com.teskalabs.seacat.android.client.SeaCatClient;
  * Sends data to a server.
  * @author Premysl Cerny
  */
-public class Sender extends AsyncTask<JSONObject, String, Boolean> {
+public class Sender extends AsyncTask<byte[], String, Boolean> {
 	public static final String LOG_TAG = "BSGargoyleSender";
 
 	private Connector mConnector;
@@ -49,9 +48,9 @@ public class Sender extends AsyncTask<JSONObject, String, Boolean> {
 	 * @return Boolean
 	 */
 	@Override
-	protected Boolean doInBackground(JSONObject... params) {
-		JSONObject JSON = params[0];
-		if (JSON == null)
+	protected Boolean doInBackground(byte[]... params) {
+		byte[] byteJSON = params[0];
+		if (byteJSON == null)
 			return false;
 
 		try {
@@ -60,14 +59,14 @@ public class Sender extends AsyncTask<JSONObject, String, Boolean> {
 			// HttpURLConnection conn = (HttpURLConnection)url.openConnection();
 			HttpURLConnection conn = SeaCatClient.open(url);
 			conn.setRequestMethod("POST");
-			conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-			conn.setRequestProperty("Accept","application/json");
+			conn.setRequestProperty("Content-Type", "application/octet-stream;charset=UTF-8");
+			conn.setRequestProperty("Accept","application/octet-stream");
 			conn.setDoOutput(true);
 			conn.setDoInput(true);
 
 			// Adding the output data
 			DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-			os.writeBytes(JSON.toString());
+			os.write(byteJSON);
 
 			// Sending the data via opened stream
 			os.flush();
@@ -82,7 +81,7 @@ public class Sender extends AsyncTask<JSONObject, String, Boolean> {
 		} catch (Exception e) {
 			e.printStackTrace();
 			// save to the queue again
-			mConnector.send(JSON);
+			mConnector.send(byteJSON);
 			return false;
 		}
 
