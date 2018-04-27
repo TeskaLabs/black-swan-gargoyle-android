@@ -20,7 +20,7 @@
         android:theme="@style/AppTheme">
 
         <meta-data
-            android:name="bsgargoyle.send_data"
+            android:name="com.teskalabs.blackswan.gargoyle.use_seacat"
             android:value="true" />
 
         <activity android:name="com.teskalabs.blackswan.gargoyle.app.MainActivity">

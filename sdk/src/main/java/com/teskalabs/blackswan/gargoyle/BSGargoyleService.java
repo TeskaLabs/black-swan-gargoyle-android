@@ -202,7 +202,7 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 		try {
 			ApplicationInfo ai = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
 			Bundle bundle = ai.metaData;
-			return bundle.getBoolean("bsgargoyle.send_data", false);
+			return bundle.getBoolean("com.teskalabs.blackswan.gargoyle.use_seacat", false);
 		} catch (PackageManager.NameNotFoundException|NullPointerException e) {
 			Log.e(LOG_TAG, "Unable to load application meta-data: " + e.getMessage());
 			return false;
