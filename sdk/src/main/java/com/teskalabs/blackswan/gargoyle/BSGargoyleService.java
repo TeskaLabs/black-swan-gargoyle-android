@@ -71,6 +71,10 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	ArrayList<JsonEvent> mEvents;
 	// The current location
 	private Location mLocation;
+	// Allow closing
+	private boolean allowClose;
+	// GPS enabled
+	private boolean mGPSEnabled;
 
 	/**
 	 * A basic constructor.
@@ -83,6 +87,13 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 		mEvents = new ArrayList<>();
 		// Other
 		clientTag = "";
+	}
+
+	/**
+	 * Allows closing of the service;
+	 */
+	public void allowClose() {
+		allowClose = true;
 	}
 
 	/**
@@ -108,6 +119,11 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 		}
 		// This
 		super.onDestroy();
+		// re-creating
+		if (!allowClose) {
+			Intent broadcastIntent = new Intent("com.teskalabs.blackswan.gargoyle.BSRestart");
+			sendBroadcast(broadcastIntent);
+		}
 	}
 
 	/**
@@ -149,8 +165,10 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	 */
 	public static void stopConnection(Context context, BSGargoyleServiceConnection connection) {
 		// Unbinding
-		if (connection != null)
+		if (connection != null) {
+			connection.requestClose(); // request closing of the service
 			context.unbindService(connection);
+		}
 	}
 
 	/**
@@ -266,10 +284,12 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 				} else {
 					mConnector = null;
 				}
+				mGPSEnabled = false;
 				initialize(); // initialize
 			}
 		}
-		return Service.START_NOT_STICKY;
+		allowClose = false;
+		return Service.START_STICKY;
 	}
 
 	/**
@@ -364,6 +384,7 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 					Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 					if (location != null)
 						mLocation = location;
+					mGPSEnabled = true;
 				}
 				JsonEvent.changeLocationAtAll(mEvents, mLocation); // saving
 			} catch (SecurityException e) {
@@ -380,6 +401,26 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	}
 
 	/**
+	 * Enables the GPS provider if it is not enabled yet.
+	 */
+	private void enableGPS() {
+		if (mGPSEnabled)
+			return;
+		LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
+		if (locationManager != null) {
+			try {
+				if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+					locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+					mGPSEnabled = true;
+				}
+			} catch (SecurityException e) {
+				e.printStackTrace();
+				Log.e(LOG_TAG, getResources().getString(R.string.location_permissions));
+			}
+		}
+	}
+
+	/**
 	 * Refreshes all information that might have changed.
 	 */
 	private void refreshAllInfo() {
@@ -393,6 +434,8 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	 * Gets the basic information about the phone (dimensions).
 	 */
 	private void retrieveBasicPhoneInformation() {
+		// Check
+		enableGPS();
 		// Phone information
 		try {
 			JsonEvent.changePhoneInfoAtAll(mEvents,

@@ -7,8 +7,8 @@ android {
         applicationId "com.teskalabs.blackswan.gargoyle.app"
         minSdkVersion 21
         targetSdkVersion 26
-        versionCode 18040001
-        versionName "v1804-alpha.1"
+        versionCode 18050001
+        versionName "v1805-alpha.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

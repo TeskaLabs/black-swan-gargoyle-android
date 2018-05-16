@@ -54,6 +54,9 @@ public class BSGargoyleServerHandler extends Handler {
 			case BSGargoyleMessage.MSG_RESET_IDENTITY:
 				mService.resetIdentity();
 				break;
+			case BSGargoyleMessage.MSG_ALLOW_CLOSE:
+				mService.allowClose();
+				break;
 			default:
 				super.handleMessage(msg);
 				break;

@@ -16,8 +16,19 @@
         <service
             android:name="com.teskalabs.blackswan.gargoyle.BSGargoyleService"
             android:process=":bsgargoyle"
-            android:exported="false">
+            android:enabled="true"
+            android:exported="true">
         </service>
+
+        <receiver
+            android:name="com.teskalabs.blackswan.gargoyle.BSRestartReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:label="RestartServiceWhenStopped">
+            <intent-filter>
+                <action android:name="com.teskalabs.blackswan.gargoyle.BSRestart"/>
+            </intent-filter>
+        </receiver>
 
     </application>
 

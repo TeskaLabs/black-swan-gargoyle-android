@@ -25,6 +25,23 @@ public class BSGargoyleServiceConnection implements ServiceConnection {
 	}
 
 	/**
+	 * Requests closing.
+	 * @return boolean
+	 */
+	public boolean requestClose() {
+		if (mServiceMessenger == null)
+			return false;
+		try {
+			Message msg = Message.obtain(null, BSGargoyleMessage.MSG_ALLOW_CLOSE);
+			mServiceMessenger.send(msg);
+			return true;
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	/**
 	 * Requests current data (events).
 	 * @return boolean
 	 */

@@ -35,6 +35,8 @@ import com.teskalabs.blackswan.gargoyle.app.fragments.ViewPagerAdapter;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Main activity class that calls the BS SDK to gather and send data.
@@ -117,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 		MenuItem item = menu.findItem(R.id.menu_reset_identity);
 		if (isConnected) {
 			item.setEnabled(true);
+			findViewById(R.id.sendButton).setEnabled(true);
 		} else {
 			item.setEnabled(false);
 		}
@@ -152,14 +155,31 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 				return;
 			}
 			// Starting or stopping the service
-			Button btn = findViewById(R.id.sendButton);
+			final Button btn = findViewById(R.id.sendButton);
 			if (BSGargoyleService.isRunning(MainActivity.this)) {
 				// Stopping the service
 				isConnected = false;
-				if (mConnection != null) {
-					BSGargoyleService.stopConnection(this, mConnection);
+				try {
+					if (mConnection != null) {
+						BSGargoyleService.stopConnection(this, mConnection);
+					}
+					BSGargoyleService.stop(MainActivity.this);
+					btn.setEnabled(false);
+					// Enable the button after a delay
+					new Timer().schedule(new TimerTask() {
+						@Override
+						public void run() {
+							MainActivity.this.runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									btn.setEnabled(true);
+								}
+							});
+						}
+					}, 1000);
+				} catch (IllegalArgumentException e) {
+					e.fillInStackTrace();
 				}
-				BSGargoyleService.stop(MainActivity.this);
 				// Button text
 				btn.setText(getResources().getString(R.string.btn_start));
 				invalidateOptionsMenu(); // menu
@@ -170,6 +190,7 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 					mConnection = BSGargoyleService.startConnection(this, this);
 					// Button text
 					btn.setText(getResources().getString(R.string.btn_stop));
+					btn.setEnabled(false);
 				} catch (SecurityException e) {
 					e.printStackTrace();
 				}

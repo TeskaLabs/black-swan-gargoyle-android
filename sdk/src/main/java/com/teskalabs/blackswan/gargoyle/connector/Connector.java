@@ -27,7 +27,7 @@ public class Connector implements InternetConnectivityListener {
 	 */
 	public Connector(Context context, String url) {
 		mUrl = url;
-		mQueue = new ArrayDeque<>();
+		mQueue = new ArrayDeque<>(250);
 		isSending = false;
 		isReady = false;
 		mConnected = false;
