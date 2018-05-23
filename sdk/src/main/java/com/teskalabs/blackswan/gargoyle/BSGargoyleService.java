@@ -2,6 +2,8 @@ package com.teskalabs.blackswan.gargoyle;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
@@ -75,6 +77,8 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	private boolean allowClose;
 	// GPS enabled
 	private boolean mGPSEnabled;
+	// Alarm
+	private PendingIntent mAlarmIntent;
 
 	/**
 	 * A basic constructor.
@@ -87,6 +91,7 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 		mEvents = new ArrayList<>();
 		// Other
 		clientTag = "";
+		mAlarmIntent = null;
 	}
 
 	/**
@@ -117,13 +122,16 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 			unregisterReceiver(mSeaCatReceiver);
 			mSeaCatReceiver = null;
 		}
-		// This
-		super.onDestroy();
 		// re-creating
 		if (!allowClose) {
 			Intent broadcastIntent = new Intent("com.teskalabs.blackswan.gargoyle.BSRestart");
 			sendBroadcast(broadcastIntent);
+		} else {
+			// Stopping the ALARM
+			stopAlarm(this);
 		}
+		// This
+		super.onDestroy();
 	}
 
 	/**
@@ -289,7 +297,38 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 			}
 		}
 		allowClose = false;
+		// Running the ALARM
+		startAlarm(this);
 		return Service.START_STICKY;
+	}
+
+	/**
+	 * Starts the periodic check that the service is running.
+	 * @param context Context
+	 */
+	public void startAlarm(Context context) {
+		AlarmManager alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+		Intent intent = new Intent("com.teskalabs.blackswan.gargoyle.BSRestart");
+		intent.putExtra("ifRunning", false);
+		mAlarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
+		if (alarmMgr != null) {
+			// Stopping
+			stopAlarm(context);
+			// Starting
+			alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),
+					getResources().getInteger(R.integer.alarm_interval_millis), mAlarmIntent);
+		}
+	}
+
+	/**
+	 * Stops the periodic check that the service is running.
+	 * @param context Context
+	 */
+	public void stopAlarm(Context context) {
+		AlarmManager alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+		if (alarmMgr != null && mAlarmIntent != null) {
+			alarmMgr.cancel(mAlarmIntent);
+		}
 	}
 
 	/**

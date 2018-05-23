@@ -11,7 +11,10 @@ public class BSRestartReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		try {
-			BSGargoyleService.run(context);
+			if (!BSGargoyleService.isRunning(context)
+					|| intent.getBooleanExtra("ifRunning", true)) {
+				BSGargoyleService.run(context);
+			}
 		} catch (SecurityException e) {
 			e.printStackTrace();
 		}
