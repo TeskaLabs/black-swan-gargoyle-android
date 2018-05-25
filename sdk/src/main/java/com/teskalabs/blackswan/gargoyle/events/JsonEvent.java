@@ -248,23 +248,33 @@ public abstract class JsonEvent {
 	public void changePhoneInfo(String vendorModel, String phoneType, String imsi,
 								String imei, String msisdn, String iccID) {
 		// Check
-		if (mVendorModel.equals(vendorModel) && PhoneTypeStr.equals(phoneType) && IMSI.equals(imsi)
-				&& IMEI.equals(imei) && MSISDN.equals(msisdn) && iccid.equals(iccID))
+		if ((mVendorModel != null && mVendorModel.equals(vendorModel)) &&
+				(PhoneTypeStr != null && PhoneTypeStr.equals(phoneType)) &&
+				(IMSI != null && IMSI.equals(imsi)) &&
+				(IMEI != null && IMEI.equals(imei)) &&
+				(MSISDN != null && MSISDN.equals(msisdn)) &&
+				(iccid != null && iccid.equals(iccID)))
 			return;
 		// Save
-		mVendorModel = vendorModel;
-		PhoneTypeStr = phoneType;
-		IMSI = imsi;
-		IMEI = imei;
-		MSISDN = msisdn;
-		iccid = iccID;
+		if (mVendorModel != null)
+			mVendorModel = vendorModel;
+		if (PhoneTypeStr != null)
+			PhoneTypeStr = phoneType;
+		if (IMSI != null)
+			IMSI = imsi;
+		if (IMEI != null)
+			IMEI = imei;
+		if (MSISDN != null)
+			MSISDN = msisdn;
+		if (iccid != null)
+			iccid = iccID;
 		// Phone information
 		try {
 			mJSONEvent.put("vendor_model", mVendorModel);
 			mJSONEvent.put("phone_type", PhoneTypeStr);
 			mJSONEvent.put("IMSI", IMSI);
 			mJSONEvent.put("IMEI", IMEI);
-			if (!MSISDN.equals(""))
+			if (MSISDN !=  null && !MSISDN.equals(""))
 				mJSONEvent.put("MSISDN", MSISDN);
 			mJSONEvent.put("iccid", iccid);
 			mDimensionsChanged = true; // notify
