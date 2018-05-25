@@ -374,8 +374,7 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 		if (mOnlyWifiLoc) {
 			return (locationManager != null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
 		} else {
-			return (locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-					&& locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
+			return (locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER));
 		}
 	}
 

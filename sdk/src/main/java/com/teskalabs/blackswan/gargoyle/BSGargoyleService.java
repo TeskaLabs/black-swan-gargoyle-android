@@ -107,20 +107,25 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	@Override
 	public void onDestroy() {
 		// Location listener
-		LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
-		if (locationManager != null) {
-			locationManager.removeUpdates(this);
-		}
-		// Phone listener
-		TMgr.listen(PhoneStateListener, android.telephony.PhoneStateListener.LISTEN_NONE);
-		// Connector
-		if (mConnector != null) {
-			mConnector.delete();
-			mConnector = null;
-		}
-		if (mSeaCatReceiver != null) {
-			unregisterReceiver(mSeaCatReceiver);
-			mSeaCatReceiver = null;
+		try {
+			LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+			if (locationManager != null) {
+				locationManager.removeUpdates(this);
+			}
+			// Phone listener
+			if (TMgr != null && PhoneStateListener != null)
+				TMgr.listen(PhoneStateListener, android.telephony.PhoneStateListener.LISTEN_NONE);
+			// Connector
+			if (mConnector != null) {
+				mConnector.delete();
+				mConnector = null;
+			}
+			if (mSeaCatReceiver != null) {
+				unregisterReceiver(mSeaCatReceiver);
+				mSeaCatReceiver = null;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		// re-creating
 		if (!allowClose) {
@@ -252,7 +257,11 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 			} else {
 				// Checking if the are allowed to send data to the server
 				if (isSendingAllowed()) {
-					SeaCatClient.initialize(this);
+					final BSGlobalClass globalVariable = (BSGlobalClass)getApplicationContext();
+					if (!globalVariable.isWasInitialized()) {
+						SeaCatClient.initialize(this);
+						globalVariable.setWasInitialized(true);
+					}
 					// Initializing the sending object
 					mConnector = new Connector(this, getResources().getString(R.string.connector_url));
 					// Registering the SeaCat receiver
@@ -416,13 +425,19 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 		LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
 		if (locationManager != null) {
 			try {
-				locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
-				mLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+				if (locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER) != null)
+					mLocation = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+				if (locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER) != null)
+					mLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+				if (locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER) != null)
+					mLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+				// Registering the network provider
+				if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+					locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
+				}
+				// Registering the GPS provider
 				if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 					locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-					Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-					if (location != null)
-						mLocation = location;
 					mGPSEnabled = true;
 				}
 				JsonEvent.changeLocationAtAll(mEvents, mLocation); // saving
