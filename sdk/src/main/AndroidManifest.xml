@@ -22,12 +22,9 @@
         </service>
 
         <receiver
-            android:name="com.teskalabs.blackswan.gargoyle.BSRestartReceiver"
-            android:enabled="true"
-            android:exported="true"
-            android:label="RestartServiceWhenStopped">
+            android:name="com.teskalabs.blackswan.gargoyle.BSWakefulReceiver">
             <intent-filter>
-                <action android:name="com.teskalabs.blackswan.gargoyle.BSRestart"/>
+                <action android:name="com.teskalabs.blackswan.gargoyle.BSWakefulGargoyleService"/>
             </intent-filter>
         </receiver>
 

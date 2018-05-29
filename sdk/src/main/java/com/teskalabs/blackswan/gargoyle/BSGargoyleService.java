@@ -27,6 +27,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.teskalabs.blackswan.gargoyle.cell.CellData;
 import com.teskalabs.blackswan.gargoyle.connector.Connector;
@@ -77,8 +80,10 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	private boolean allowClose;
 	// GPS enabled
 	private boolean mGPSEnabled;
-	// Alarm
-	private PendingIntent mAlarmIntent;
+	// Timer
+	private Timer mTimer;
+	// Intent
+	private Intent mIntent;
 
 	/**
 	 * A basic constructor.
@@ -91,7 +96,8 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 		mEvents = new ArrayList<>();
 		// Other
 		clientTag = "";
-		mAlarmIntent = null;
+		mTimer = null;
+		mIntent = null;
 	}
 
 	/**
@@ -127,13 +133,13 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		// re-creating
+		// Wakelock
+		if (mIntent != null) {
+			BSWakefulReceiver.completeWakefulIntent(mIntent);
+		}
+		// Log
 		if (!allowClose) {
-			Intent broadcastIntent = new Intent("com.teskalabs.blackswan.gargoyle.BSRestart");
-			sendBroadcast(broadcastIntent);
-		} else {
-			// Stopping the ALARM
-			stopAlarm(this);
+			Log.i(LOG_TAG, getResources().getString(R.string.log_closed));
 		}
 		// This
 		super.onDestroy();
@@ -147,8 +153,8 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 			Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE})
 	public static void run(Context context) {
 		// Starting the service
-		Intent intent = new Intent(context, BSGargoyleService.class);
-		context.startService(intent);
+		Intent broadcastIntent = new Intent("com.teskalabs.blackswan.gargoyle.BSWakefulGargoyleService");
+		context.sendBroadcast(broadcastIntent);
 	}
 
 	/**

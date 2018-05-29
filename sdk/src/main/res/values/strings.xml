@@ -6,4 +6,5 @@
 
     <!-- Logging -->
     <string name="log_permissions">"Please make sure the user has access to ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, ACCESS_NETWORK_STATE and READ_PHONE_STATE permissions."</string>
+    <string name="log_closed">The service was stopped even though it had not been allowed explicitly by sending the MSG_ALLOW_CLOSE message.</string>
 </resources>
