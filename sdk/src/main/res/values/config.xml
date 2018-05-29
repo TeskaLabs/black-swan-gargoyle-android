@@ -2,5 +2,5 @@
 <resources>
     <string name="connector_url">https://bsapphost.seacat/bsapp</string>
     <integer name="gps_interval_sec">60</integer>
-    <integer name="alarm_interval_millis">60000</integer>
+    <integer name="basic_event_period_ms">3000</integer>
 </resources>

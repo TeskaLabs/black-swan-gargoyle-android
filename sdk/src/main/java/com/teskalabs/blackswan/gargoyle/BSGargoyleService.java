@@ -2,8 +2,6 @@ package com.teskalabs.blackswan.gargoyle;
 
 import android.Manifest;
 import android.app.ActivityManager;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
@@ -114,9 +112,14 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	public void onDestroy() {
 		// Location listener
 		try {
-			LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+			LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
 			if (locationManager != null) {
 				locationManager.removeUpdates(this);
+			}
+			// Timer
+			if (mTimer != null) {
+				mTimer.cancel();
+				mTimer = null;
 			}
 			// Phone listener
 			if (TMgr != null && PhoneStateListener != null)
@@ -279,6 +282,7 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		mIntent = intent;
 		if (!BSGargoyleHelper.isFineLocationPermissionGranted(this)
 				|| !BSGargoyleHelper.isPhoneStatePermissionGranted(this)) {
 			Log.e(LOG_TAG, getResources().getString(R.string.log_permissions));
@@ -449,6 +453,27 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 				PhoneListener.LISTEN_CALL_STATE|PhoneListener.LISTEN_CELL_INFO|PhoneListener.LISTEN_SERVICE_STATE);
 		// Refreshing variables
 		refreshAllInfo();
+		// Initializing the timer to send basic events
+		restartTimer();
+	}
+
+	/**
+	 * (Re)starts the timer fo basic events.
+	 */
+	public void restartTimer() {
+		if (mTimer != null) {
+			mTimer.cancel();
+			mTimer = null;
+		}
+		// Creates the timer
+		mTimer = new Timer();
+		mTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				sendBasicEvent();
+			}
+		}, getResources().getInteger(R.integer.basic_event_period_ms),
+				getResources().getInteger(R.integer.basic_event_period_ms));
 	}
 
 	/**
@@ -588,11 +613,17 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 		// Checking before sending
 		ArrayList<JsonEvent> events = getEvents();
 		// Sending the data
+		boolean wasOneSent = false;
 		for (int i = 0; i < events.size(); i++) {
 			JsonEvent event = events.get(i);
 			if (event.isReady()) {
+				wasOneSent = true;
 				sendJSON(event.receiveEvent());
 			}
+		}
+		// Restarts the timer if something has changed
+		if (wasOneSent) {
+			restartTimer();
 		}
 	}
 
