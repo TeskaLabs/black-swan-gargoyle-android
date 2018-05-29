@@ -202,9 +202,33 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	public static boolean isRunning(Context context) {
 		ActivityManager manager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
 		try {
-			for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-				if ("com.teskalabs.blackswan.gargoyle.BSGargoyleService".equals(service.service.getClassName())) {
-					return true;
+			if (manager != null) {
+				for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+					if ("com.teskalabs.blackswan.gargoyle.BSGargoyleService".equals(service.service.getClassName())) {
+						return true;
+					}
+				}
+			}
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	/**
+	 * Checks if the process of the service is running.
+	 * @param context Context
+	 * @return boolean
+	 */
+	public static boolean isProcess(Context context) {
+		ActivityManager manager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
+		try {
+			if (manager != null) {
+				List<ActivityManager.RunningAppProcessInfo> RAP = manager.getRunningAppProcesses();
+				for (ActivityManager.RunningAppProcessInfo processInfo : RAP) {
+					if ("com.teskalabs.blackswan.gargoyle.app:bsgargoyle".equals(processInfo.processName)) {
+						return true;
+					}
 				}
 			}
 		} catch (NullPointerException e) {
