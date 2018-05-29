@@ -1,10 +1,11 @@
-package com.teskalabs.blackswan.gargoyle;
+package com.teskalabs.blackswan.gargoyle.monitor;
 
 import android.content.Context;
 import android.os.Build;
 import android.os.Message;
 import android.os.PowerManager;
 
+import com.teskalabs.blackswan.gargoyle.BSGargoyleService;
 import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleMessage;
 
 import java.util.Timer;

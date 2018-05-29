@@ -24,8 +24,8 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.teskalabs.blackswan.gargoyle.BSGargoyleService;
-import com.teskalabs.blackswan.gargoyle.BSServiceMonitor;
-import com.teskalabs.blackswan.gargoyle.BSServiceMonitorListener;
+import com.teskalabs.blackswan.gargoyle.monitor.BSServiceMonitor;
+import com.teskalabs.blackswan.gargoyle.monitor.BSServiceMonitorListener;
 import com.teskalabs.blackswan.gargoyle.events.BSGargoyleEvents;
 import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleServiceConnection;
 import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleListener;

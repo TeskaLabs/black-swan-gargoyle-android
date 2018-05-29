@@ -1,4 +1,4 @@
-package com.teskalabs.blackswan.gargoyle;
+package com.teskalabs.blackswan.gargoyle.monitor;
 
 /**
  * A listener to receive notifications about the service's state changes.
