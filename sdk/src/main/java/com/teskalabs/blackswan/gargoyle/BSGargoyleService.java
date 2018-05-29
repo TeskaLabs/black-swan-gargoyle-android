@@ -328,38 +328,7 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 			initialize(); // initialize
 		}
 		allowClose = false;
-		// Running the ALARM
-		startAlarm(this);
 		return Service.START_STICKY;
-	}
-
-	/**
-	 * Starts the periodic check that the service is running.
-	 * @param context Context
-	 */
-	public void startAlarm(Context context) {
-		AlarmManager alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-		Intent intent = new Intent("com.teskalabs.blackswan.gargoyle.BSRestart");
-		intent.putExtra("ifRunning", false);
-		mAlarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
-		if (alarmMgr != null) {
-			// Stopping
-			stopAlarm(context);
-			// Starting
-			alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),
-					getResources().getInteger(R.integer.alarm_interval_millis), mAlarmIntent);
-		}
-	}
-
-	/**
-	 * Stops the periodic check that the service is running.
-	 * @param context Context
-	 */
-	public void stopAlarm(Context context) {
-		AlarmManager alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-		if (alarmMgr != null && mAlarmIntent != null) {
-			alarmMgr.cancel(mAlarmIntent);
-		}
 	}
 
 	/**
