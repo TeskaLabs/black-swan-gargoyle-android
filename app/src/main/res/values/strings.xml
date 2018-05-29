@@ -15,4 +15,12 @@
     <string name="gps_not_allowed">The GPS is not allowed on your device. Would you like to enable it now?</string>
     <string name="gps_enable_gps">Enable GPS and WiFi location provider</string>
     <string name="gps_enable_wifi">Enable only WiFi location provider</string>
+
+    <!-- Service's states -->
+    <string name="service_state_unknown">State: Unknown</string>
+    <string name="service_state_sending">State: Sending</string>
+    <string name="service_state_stopped">State: Stopped</string>
+    <string name="service_state_stopped_process_on">State: Stopped with process on</string>
+    <string name="service_state_idle">State: Idle</string>
+    <string name="service_state_device_idle">State: Device idle</string>
 </resources>

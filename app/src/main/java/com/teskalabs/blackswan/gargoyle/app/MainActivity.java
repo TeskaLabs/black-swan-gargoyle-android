@@ -24,6 +24,8 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.teskalabs.blackswan.gargoyle.BSGargoyleService;
+import com.teskalabs.blackswan.gargoyle.BSServiceMonitor;
+import com.teskalabs.blackswan.gargoyle.BSServiceMonitorListener;
 import com.teskalabs.blackswan.gargoyle.events.BSGargoyleEvents;
 import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleServiceConnection;
 import com.teskalabs.blackswan.gargoyle.messaging.BSGargoyleListener;
@@ -34,6 +36,7 @@ import com.teskalabs.blackswan.gargoyle.app.fragments.ViewPagerAdapter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -42,7 +45,7 @@ import java.util.TimerTask;
  * Main activity class that calls the BS SDK to gather and send data.
  * @author Premysl Cerny
  */
-public class MainActivity extends AppCompatActivity implements BSGargoyleListener {
+public class MainActivity extends AppCompatActivity implements BSGargoyleListener, BSServiceMonitorListener {
 	// GPS
 	public static int GPS_SETTINGS_INTENT = 200;
 	private boolean mOnlyWifiLoc;
@@ -57,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 	// Keeping some important data
 	private String clientTag;
 	private String lastBasicEvent;
+	// BSGargoyleService monitor
+	private BSServiceMonitor mMonitor;
 
 	/**
 	 * A main function to register basic components.
@@ -95,6 +100,19 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 		// Adding tabs
 		TabLayout tabLayout = findViewById(R.id.tabs);
 		tabLayout.setupWithViewPager(viewPager);
+
+		// Preparing the monitor
+		mMonitor = new BSServiceMonitor(this, this);
+		mMonitor.updateWithTimeOrEvent();
+
+		// Showing the current version
+		try {
+			String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+			TextView textVersion = findViewById(R.id.textVersion);
+			textVersion.setText(versionName);
+		} catch (PackageManager.NameNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -173,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 								@Override
 								public void run() {
 									btn.setEnabled(true);
+									mMonitor.updateWithTimeOrEvent();
 								}
 							});
 						}
@@ -224,6 +243,9 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 	 */
 	@Override
 	public boolean onReceiveMessage(Message msg) {
+		// Notifying the monitor
+		if (mMonitor != null)
+			mMonitor.updateWithMessage(msg);
 		// Processing the event
 		switch (msg.what) {
 			case BSGargoyleMessage.MSG_JSON_EVENT:
@@ -245,12 +267,68 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 				if (mConnection != null) {
 					mConnection.requestCurrentData();
 					mConnection.requestClientTag();
+					BSGargoyleService.isProcess(this);
 					isConnected = true;
 					invalidateOptionsMenu(); // menu
 				}
 				return true;
 		}
 		return false;
+	}
+
+	@Override
+	public void onReceiveServiceState(int state) {
+		final int finalState = state;
+		MainActivity.this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				TextView textState = findViewById(R.id.textState);
+				switch (finalState) {
+					case BSServiceMonitor.STATE_UNKNOWN:
+						textState.setText(getResources().getString(R.string.service_state_unknown));
+						break;
+					case BSServiceMonitor.STATE_SENDING:
+						textState.setText(getResources().getString(R.string.service_state_sending));
+						break;
+					case BSServiceMonitor.STATE_STOPPED:
+						textState.setText(getResources().getString(R.string.service_state_stopped));
+						break;
+					case BSServiceMonitor.STATE_STOPPED_PROCESS_ON:
+						textState.setText(getResources().getString(R.string.service_state_stopped_process_on));
+						break;
+					case BSServiceMonitor.STATE_DEVICE_IDLE:
+						textState.setText(getResources().getString(R.string.service_state_device_idle));
+						break;
+					case BSServiceMonitor.STATE_IDLE:
+						textState.setText(getResources().getString(R.string.service_state_idle));
+						break;
+				}
+			}
+		});
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		if (mMonitor != null) {
+			mMonitor.startTimer(getResources().getInteger(R.integer.monitor_timer_period_ms));
+		}
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		if (mMonitor != null) {
+			mMonitor.stopTimer();
+		}
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		if (mMonitor != null) {
+			mMonitor.updateWithTimeOrEvent();
+		}
 	}
 
 	/**
