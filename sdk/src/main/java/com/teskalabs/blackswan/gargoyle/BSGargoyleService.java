@@ -249,61 +249,59 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (intent != null) {
-			if (!BSGargoyleHelper.isFineLocationPermissionGranted(this)
-					|| !BSGargoyleHelper.isPhoneStatePermissionGranted(this)) {
-				Log.e(LOG_TAG, getResources().getString(R.string.log_permissions));
-				stopSelf();
-			} else {
-				// Checking if the are allowed to send data to the server
-				if (isSendingAllowed()) {
-					final BSGlobalClass globalVariable = (BSGlobalClass)getApplicationContext();
-					if (!globalVariable.isWasInitialized()) {
-						SeaCatClient.initialize(this);
-						globalVariable.setWasInitialized(true);
-					}
-					// Initializing the sending object
-					mConnector = new Connector(this, getResources().getString(R.string.connector_url));
-					// Registering the SeaCat receiver
-					IntentFilter intentFilter = new IntentFilter();
-					intentFilter.addAction(SeaCatClient.ACTION_SEACAT_STATE_CHANGED);
-					intentFilter.addAction(SeaCatClient.ACTION_SEACAT_CSR_NEEDED);
-					intentFilter.addAction(SeaCatClient.ACTION_SEACAT_CLIENTID_CHANGED);
-					intentFilter.addCategory(SeaCatClient.CATEGORY_SEACAT);
-					if (isSeaCatReady(SeaCatClient.getState())) {
-						mConnector.setReady(); // we are ready to send data!
-					}
-					mSeaCatReceiver = new BroadcastReceiver() {
-						@Override
-						public void onReceive(Context context, Intent intent) {
-							if (intent.hasCategory(SeaCatClient.CATEGORY_SEACAT)) {
-								// Listening for Client Tag changes
-								String client_tag = intent.getStringExtra(SeaCatClient.EXTRA_CLIENT_TAG);
-								if (client_tag != null && !client_tag.equals(clientTag)) {
-									clientTag = client_tag;
-									mMessengerServer.sendClientTag(client_tag);
-								}
-								// Action
-								String action = intent.getAction();
-								// Listening for state changes
-								if (action.equals(SeaCatClient.ACTION_SEACAT_STATE_CHANGED)) {
-									String state = intent.getStringExtra(SeaCatClient.EXTRA_STATE);
-									if (isSeaCatReady(state)) {
-										mConnector.setReady(); // we are ready to send data!
-									} else {
-										mConnector.unsetReady();
-									}
+		if (!BSGargoyleHelper.isFineLocationPermissionGranted(this)
+				|| !BSGargoyleHelper.isPhoneStatePermissionGranted(this)) {
+			Log.e(LOG_TAG, getResources().getString(R.string.log_permissions));
+			stopSelf();
+		} else {
+			// Checking if the are allowed to send data to the server
+			if (isSendingAllowed()) {
+				final BSGlobalClass globalVariable = (BSGlobalClass)getApplicationContext();
+				if (!globalVariable.isWasInitialized()) {
+					SeaCatClient.initialize(this);
+					globalVariable.setWasInitialized(true);
+				}
+				// Initializing the sending object
+				mConnector = new Connector(this, getResources().getString(R.string.connector_url));
+				// Registering the SeaCat receiver
+				IntentFilter intentFilter = new IntentFilter();
+				intentFilter.addAction(SeaCatClient.ACTION_SEACAT_STATE_CHANGED);
+				intentFilter.addAction(SeaCatClient.ACTION_SEACAT_CSR_NEEDED);
+				intentFilter.addAction(SeaCatClient.ACTION_SEACAT_CLIENTID_CHANGED);
+				intentFilter.addCategory(SeaCatClient.CATEGORY_SEACAT);
+				if (isSeaCatReady(SeaCatClient.getState())) {
+					mConnector.setReady(); // we are ready to send data!
+				}
+				mSeaCatReceiver = new BroadcastReceiver() {
+					@Override
+					public void onReceive(Context context, Intent intent) {
+						if (intent.hasCategory(SeaCatClient.CATEGORY_SEACAT)) {
+							// Listening for Client Tag changes
+							String client_tag = intent.getStringExtra(SeaCatClient.EXTRA_CLIENT_TAG);
+							if (client_tag != null && !client_tag.equals(clientTag)) {
+								clientTag = client_tag;
+								mMessengerServer.sendClientTag(client_tag);
+							}
+							// Action
+							String action = intent.getAction();
+							// Listening for state changes
+							if (action.equals(SeaCatClient.ACTION_SEACAT_STATE_CHANGED)) {
+								String state = intent.getStringExtra(SeaCatClient.EXTRA_STATE);
+								if (isSeaCatReady(state)) {
+									mConnector.setReady(); // we are ready to send data!
+								} else {
+									mConnector.unsetReady();
 								}
 							}
 						}
-					};
-					registerReceiver(mSeaCatReceiver, intentFilter);
-				} else {
-					mConnector = null;
-				}
-				mGPSEnabled = false;
-				initialize(); // initialize
+					}
+				};
+				registerReceiver(mSeaCatReceiver, intentFilter);
+			} else {
+				mConnector = null;
 			}
+			mGPSEnabled = false;
+			initialize(); // initialize
 		}
 		allowClose = false;
 		// Running the ALARM
