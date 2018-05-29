@@ -622,6 +622,22 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 	}
 
 	/**
+	 * Forces a basic event to be sent.
+	 */
+	public void sendBasicEvent() {
+		// Checking before sending
+		ArrayList<JsonEvent> events = getEvents();
+		// Sending the data
+		if (events != null) {
+			BasicEvent basicEvent = (BasicEvent) events.get(BASIC_EVENT_INDEX);
+			if (basicEvent != null) {
+				basicEvent.forceReady();
+				sendJSON(basicEvent.receiveEvent());
+			}
+		}
+	}
+
+	/**
 	 * Sends JSON to all connectors.
 	 * @param JSON JSONObject
 	 */
