@@ -41,7 +41,7 @@ public class BSServiceMonitor {
 
 	/**
 	 * Starts the timer which checks the current state.
-	 * @param periodInMillis
+	 * @param periodInMillis int
 	 */
 	public void startTimer(int periodInMillis) {
 		if (mTimer == null) {
