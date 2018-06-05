@@ -1,4 +1,4 @@
-# BSMTTelemetry SDK
+# BSGargoyle SDK
 
 ## Events
 
