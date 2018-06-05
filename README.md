@@ -8,7 +8,7 @@ To enable the optional function of sending the collected data to our servers for
 
 ```
 <meta-data
-	android:name="bsgargoyle.send_data"
+	android:name="com.teskalabs.blackswan.gargoyle.use_seacat"
 	android:value="true" />
 ```
 
