@@ -267,7 +267,6 @@ public class MainActivity extends AppCompatActivity implements BSGargoyleListene
 				if (mConnection != null) {
 					mConnection.requestCurrentData();
 					mConnection.requestClientTag();
-					BSGargoyleService.isProcess(this);
 					isConnected = true;
 					invalidateOptionsMenu(); // menu
 				}
