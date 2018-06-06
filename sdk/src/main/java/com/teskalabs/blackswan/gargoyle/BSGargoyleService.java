@@ -156,7 +156,7 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 			Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE})
 	public static void run(Context context) {
 		// Starting the service
-		Intent broadcastIntent = new Intent("com.teskalabs.blackswan.gargoyle.BSWakefulGargoyleService");
+		Intent broadcastIntent = new Intent(context, BSWakefulReceiver.class);
 		context.sendBroadcast(broadcastIntent);
 	}
 
@@ -234,6 +234,8 @@ public class BSGargoyleService extends Service implements PhoneListenerCallback,
 		try {
 			if (manager != null) {
 				List<ActivityManager.RunningAppProcessInfo> RAP = manager.getRunningAppProcesses();
+				if (RAP == null)
+					return false;
 				for (ActivityManager.RunningAppProcessInfo processInfo : RAP) {
 					if ("com.teskalabs.blackswan.gargoyle.app:bsgargoyle".equals(processInfo.processName)) {
 						return true;

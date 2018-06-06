@@ -52,7 +52,14 @@ For reference implementation, please see the demo app's code.
 
 ## Using the SDK directly
 
-If you use BSGargoyle SDK directly as part of your own application, you also need to explicitly enable the data sending to our servers.
+If you use BSGargoyle SDK directly as part of your own application, i. e.
+
+```
+Intent broadcastIntent = new Intent(context, BSWakefulReceiver.class);
+context.sendBroadcast(broadcastIntent);
+```
+
+you also need to explicitly enable the data sending to our servers.
 
 ### Enabling sending to the server
 
