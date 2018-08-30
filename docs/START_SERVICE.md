@@ -59,8 +59,6 @@ Intent broadcastIntent = new Intent(context, BSWakefulReceiver.class);
 context.sendBroadcast(broadcastIntent);
 ```
 
-you also need to explicitly enable the data sending to our servers.
-
 ### Enabling sending to the server
 
 To enable the optional function of sending the collected data to our servers for further analysis, please put the following code inside the `<application></<application>` tag in your application manifest XML file:
